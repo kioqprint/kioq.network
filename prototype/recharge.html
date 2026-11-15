@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KIOQ.network — التعبئة</title>
+<style>
+:root{font-family:Tahoma,Arial,sans-serif;color:#172033;background:#f4f6fa;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}
+header{background:#111c35;color:#fff;padding:18px max(18px,calc((100% - 1180px)/2));display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-size:22px;font-weight:800;letter-spacing:.2px}.brand span{color:#66d6b0}.sub{font-size:12px;color:#c5cee0;margin-top:4px}
+main{max-width:1180px;margin:24px auto;padding:0 16px}.topline{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.topline h1{font-size:24px;margin:0}.muted{color:#718096;font-size:13px}
+.layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr);gap:18px}.card{background:#fff;border:1px solid #e5eaf1;border-radius:16px;padding:18px;box-shadow:0 4px 18px #15213b08}
+h2{font-size:17px;margin:0 0 14px}.section{margin-top:18px}.tabs,.chips,.quick{display:flex;flex-wrap:wrap;gap:8px}
+button{cursor:pointer;border:1px solid #dbe2ec;background:#fff;color:#25334d;border-radius:10px;padding:10px 14px}
+button.active{background:#14213d;color:#fff;border-color:#14213d}button.primary{background:#087f66;color:#fff;border-color:#087f66;font-weight:700}button:disabled{opacity:.45;cursor:not-allowed}
+label{display:block;font-size:13px;font-weight:700;margin:12px 0 7px}
+input,select{width:100%;border:1px solid #dbe2ec;border-radius:10px;padding:12px;background:#fff;outline:none}input:focus,select:focus{border-color:#087f66;box-shadow:0 0 0 3px #087f6618}
+.row{display:flex;gap:10px;align-items:center}.row>*{flex:1}.hidden{display:none!important}
+.pill{display:inline-flex;padding:5px 9px;border-radius:20px;background:#edf8f4;color:#087f66;font-size:11px}
+.quick button{min-width:70px}.quick button.chosen{background:#e5f5f0;border-color:#087f66;color:#087f66;font-weight:700}
+.suggestions{border:1px solid #e5eaf1;border-radius:12px;margin-top:7px;overflow:hidden}
+.contact{display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid #edf0f5}.contact:last-child{border:0}.contact .info{flex:1;min-width:0}.contact strong{display:block;font-size:13px}.contact small{color:#718096}.contact button{padding:7px 9px;font-size:12px}
+.offer{border:1px solid #e3e9f1;border-radius:12px;padding:12px;margin-top:8px;display:flex;justify-content:space-between;gap:12px;align-items:center}.offer p{margin:5px 0 0;color:#718096;font-size:12px;line-height:1.7}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}.stat{background:#f6f8fb;border-radius:12px;padding:12px}.stat small{display:block;color:#718096}.stat b{font-size:19px}
+.record{border-top:1px solid #edf0f5;padding:13px 0}.record:first-of-type{border:0}.recordhead{display:flex;justify-content:space-between;gap:10px}.record strong{font-size:14px}.record p{margin:5px 0;color:#718096;font-size:12px}.status{font-size:11px;padding:4px 8px;border-radius:20px;background:#e9f7f1;color:#087f66;height:max-content}.status.pending{background:#fff5df;color:#946200}.status.failed{background:#fff0f0;color:#b42318}
+.details{font-size:12px;color:#536176;line-height:1.9;background:#f8fafc;border-radius:9px;padding:9px;margin-top:8px}
+.notice{background:#fff8e8;border:1px solid #f4e4bb;color:#795b18;border-radius:10px;padding:10px;font-size:12px;line-height:1.7}
+.modal{position:fixed;inset:0;background:#10182888;display:grid;place-items:center;padding:16px;z-index:4}.modalbox{background:white;border-radius:16px;padding:20px;width:min(440px,100%)}
+footer{text-align:center;color:#8290a5;font-size:11px;padding:25px}
+@media(max-width:800px){.layout{grid-template-columns:1fr}.topline{align-items:flex-start;flex-direction:column}.stats{grid-template-columns:1fr 1fr}}
+</style></head>
+<body>
+<header><div><div class="brand">KIOQ<span>.network</span></div><div class="sub">منصة تعبئة الهاتف والإنترنت لتجار التجزئة</div></div><div class="pill">واجهة تجريبية — لا تنفذ تعبئات حقيقية</div></header>
+<main>
+<div class="topline"><div><h1>إدخال التعبئات</h1><div class="muted">اختر الشبكة أو خدمة IDoom ثم أدخل بيانات الزبون</div></div><div class="muted">حساب تاجر التجزئة · مثال تجريبي</div></div>
+<div class="layout">
+<section class="card">
+<h2>1. اختر الخدمة</h2>
+<div class="tabs" id="serviceTabs">
+<button class="active" data-service="Djezzy">Djezzy</button><button data-service="Ooredoo">Ooredoo</button><button data-service="Mobilis">Mobilis</button><button data-service="Fibre">IDoom Fibre</button><button data-service="4G">IDoom 4G</button>
+</div>
+<div class="section"><h2>2. نوع الشحن</h2><div class="tabs"><button class="active" data-kind="normal">شحن عادي</button><button data-kind="offers">العروض المفعّلة</button></div></div>
+<div id="phonePanel">
+<div class="section"><h2>3. رقم الزبون</h2><label for="number">رقم الهاتف</label><input id="number" inputmode="numeric" autocomplete="off" placeholder="07XXXXXXXX" maxlength="10"><div class="muted" id="numberHint">يبدأ رقم Djezzy بـ 07</div><div id="suggestions" class="suggestions hidden"></div></div>
+</div>
+<div id="idoomPanel" class="hidden section"><h2>3. رقم اشتراك IDoom</h2><label for="idoomNumber" id="idoomLabel">الرقم الرئيسي</label><input id="idoomNumber" inputmode="numeric" autocomplete="off" placeholder="0XXXXXXXXX"><div class="muted" id="idoomHint">أدخل الرقم الرئيسي الذي يبدأ بـ 0</div><div id="idoomSuggestions" class="suggestions hidden"></div></div>
+<div class="section" id="amountSection"><h2>4. مبلغ الشحن</h2><label for="amount">المبلغ بالدينار الجزائري</label><input id="amount" inputmode="numeric" placeholder="أدخل مبلغ الشحن"><div class="muted">اضغط على مبلغ لكتابته مباشرة في الخانة</div><div class="quick" id="quickAmounts" style="margin-top:9px"></div></div>
+<div id="offersPanel" class="section hidden"><h2>العروض المفعّلة</h2><div class="notice">ستظهر هنا العروض وتفاصيلها فقط عندما يوفرها OneClick للخدمة المختارة. العروض أدناه أمثلة شكلية وليست بيانات حقيقية.</div><div id="offerList"></div></div>
+<div class="section row"><button id="addContact">＋ حفظ جهة اتصال</button><button class="primary" id="submitRecharge">تأكيد التعبئة التجريبية</button></div>
+<div class="notice section">هذه نسخة واجهة أولية. لا تتصل بـ OneClick ولا تخصم رصيداً ولا تنفذ تعبئة حقيقية.</div>
+</section>
+<aside class="card">
+<h2>جهات الاتصال المحفوظة</h2><input id="contactSearch" placeholder="ابحث بالاسم أو اللقب أو الرقم"><div id="contactsList"></div>
+<div class="section"><h2>ملخص الصلاحيات</h2><div class="notice">التاجر يرى قيمة التعبئة والمبلغ المخصوم وحالة العملية. تكلفة OneClick وهوامش المالك ومراجع المزود الداخلية لا تظهر له.</div></div>
+</aside>
+</div>
+<section class="card section">
+<div class="topline"><div><h2 style="margin:0">سجل التعبئة الكلي</h2><div class="muted">سجل هذا التاجر فقط — اضغط على العملية لعرض التفاصيل</div></div><input id="recordSearch" style="max-width:280px" placeholder="بحث بالرقم أو الاسم أو المرجع"></div>
+<div class="stats"><div class="stat"><small>عدد العمليات التجريبية</small><b id="recordCount">3</b></div><div class="stat"><small>إجمالي المبالغ</small><b id="recordTotal">1,600 دج</b></div><div class="stat"><small>عمليات ناجحة</small><b id="successCount">2</b></div></div>
+<div id="records"></div>
+</section>
+</main>
+<footer>KIOQ.network · نموذج واجهة أولي · البيانات المعروضة تجريبية</footer>
+<div id="modal" class="modal hidden"><div class="modalbox"><div class="topline"><h2>إضافة جهة اتصال</h2><button id="closeModal">إغلاق</button></div><label>الاسم</label><input id="firstName" placeholder="اسم الزبون"><label>اللقب</label><input id="lastName" placeholder="لقب الزبون"><label>الرقم</label><input id="contactNumber" inputmode="numeric" placeholder="رقم الهاتف أو الاشتراك"><label>نوع الخدمة</label><select id="contactType"><option>Djezzy</option><option>Ooredoo</option><option>Mobilis</option><option>IDoom Fibre</option><option>IDoom 4G</option></select><button class="primary" style="width:100%;margin-top:16px" id="saveContact">حفظ جهة الاتصال</button></div></div>
+<script>
+const $=id=>document.getElementById(id);
+const services={Djezzy:{label:"Djezzy",prefix:"07"},Ooredoo:{label:"Ooredoo",prefix:"05"},Mobilis:{label:"Mobilis",prefix:"06"},Fibre:{label:"IDoom Fibre",prefix:"0"}, "4G":{label:"IDoom 4G",prefix:"213"}};
+let service="Djezzy",kind="normal",selectedContact=null,amount="";
+let contacts=[
+{first:"محمد",last:"بن علي",number:"0770123456",type:"Djezzy",lastRecharge:"15/11/2026"},
+{first:"أحمد",last:"قادري",number:"0550223344",type:"Ooredoo",lastRecharge:"14/11/2026"},
+{first:"سليم",last:"بوزيان",number:"0660556677",type:"Mobilis",lastRecharge:"12/11/2026"},
+{first:"مراد",last:"شريف",number:"021234567",type:"IDoom Fibre",lastRecharge:"10/11/2026"},
+{first:"ياسين",last:"حمدي",number:"213550123456",type:"IDoom 4G",lastRecharge:"09/11/2026"}
+];
+let records=[
+{id:"KQ-1003",name:"محمد بن علي",number:"0770123456",service:"Djezzy",kind:"شحن عادي",amount:1000,status:"ناجحة",date:"16/11/2026 10:35",deduct:970},
+{id:"KQ-1002",name:"أحمد قادري",number:"0550223344",service:"Ooredoo",kind:"عرض مفعّل",amount:500,status:"قيد المعالجة",date:"16/11/2026 10:20",deduct:485},
+{id:"KQ-1001",name:"زبون غير محفوظ",number:"0660111222",service:"Mobilis",kind:"شحن عادي",amount:100,status:"فاشلة",date:"16/11/2026 09:50",deduct:0}
+];
+const quick=[50,100,200,500,1000,1500,2000];
+function serviceType(){return services[service].label}
+function isIdoom(){return service==="Fibre"||service==="4G"}
+function normalizePhone(raw){
+ let digits=raw.replace(/\D/g,"");
+ if(service==="4G"){digits=digits.replace(/^213?/,"213").slice(0,12);return digits}
+ if(service==="Fibre"){digits=digits.startsWith("0")?digits:"0"+digits;return digits.slice(0,10)}
+ const p=services[service].prefix;
+ if(!digits.startsWith(p))digits=p+digits.replace(/^(06|05|07)/,"");
+ return digits.slice(0,10);
+}
+function updateService(){
+ document.querySelectorAll("[data-service]").forEach(b=>b.classList.toggle("active",b.dataset.service===service));
+ $("phonePanel").classList.toggle("hidden",isIdoom());$("idoomPanel").classList.toggle("hidden",!isIdoom());
+ $("amountSection").classList.toggle("hidden",kind==="offers");$("offersPanel").classList.toggle("hidden",kind!=="offers");
+ $("number").value="";$("idoomNumber").value="";$("amount").value="";selectedContact=null;
+ $("number").placeholder=services[service].prefix+"XXXXXXXX";
+ $("numberHint").textContent="يبدأ الرقم بـ "+services[service].prefix+" — لا تقبل بادئة شبكة أخرى";
+ $("idoomNumber").placeholder=service==="Fibre"?"0XXXXXXXXX":"213XXXXXXXXX";
+ $("idoomHint").textContent=service==="Fibre"?"رقم Fibre يبدأ بـ 0":"رقم 4G يبدأ بـ 213";
+ renderContacts();renderSuggestions();
+ renderOffers();
+}
+function renderQuick(){ $("quickAmounts").innerHTML=quick.map(n=>'<button type="button" data-amount="'+n+'">'+n+'</button>').join("");}
+function renderContacts(){
+ const q=$("contactSearch").value.trim().toLowerCase();
+ const list=contacts.filter(c=>(c.first+" "+c.last+" "+c.number).toLowerCase().includes(q));
+ $("contactsList").innerHTML=list.map((c)=>'<div class="contact"><div class="info"><strong>'+c.first+' '+c.last+'</strong><small>'+c.number+' · '+c.type+'<br>آخر تعبئة: '+(c.lastRecharge||"لا توجد")+'</small></div><button data-pick="'+c.number+'" data-type="'+c.type+'">اختيار</button><button title="اتصال" data-call="'+c.number+'">اتصال</button><button title="واتساب" data-wa="'+c.number+'">واتساب</button></div>').join("")||'<p class="muted">لا توجد جهات اتصال مطابقة.</p>';
+}
+function renderSuggestions(){
+ const field=isIdoom()?"idoomNumber":"number", box=$(isIdoom()?"idoomSuggestions":"suggestions"), q=$(field).value;
+ const type=serviceType();const matches=contacts.filter(c=>c.type===type && (c.number.includes(q)|| (q.length===0))).slice(0,5);
+ box.classList.toggle("hidden",!matches.length||!q);
+ box.innerHTML=matches.map(c=>'<div class="contact"><div class="info"><strong>'+c.first+' '+c.last+' · '+c.number+'</strong><small>آخر تعبئة: '+(c.lastRecharge||"لا توجد")+'</small></div><button data-pick="'+c.number+'" data-type="'+c.type+'">اختيار</button></div>').join("");
+}
+function renderOffers(){
+ $("offerList").innerHTML='<div class="offer"><div><strong>تفاصيل العروض ستُحمّل من OneClick</strong><p>اسم العرض، السعر، الإنترنت، الصلاحية، المكالمات والمزايا الإضافية — حسب البيانات المتاحة من المزود.</p></div><span class="pill">بانتظار الربط</span></div>';
+}
+function selectedNumber(){return $(isIdoom()?"idoomNumber":"number").value}
+function pickNumber(number,type){
+ const map={"IDoom Fibre":"Fibre","IDoom 4G":"4G",Djezzy:"Djezzy",Ooredoo:"Ooredoo",Mobilis:"Mobilis"};
+ if(map[type]){service=map[type];updateService()}
+ $(isIdoom()?"idoomNumber":"number").value=number;
+ const c=contacts.find(x=>x.number===number);selectedContact=c||null;
+}
+function renderRecords(){
+ const q=$("recordSearch").value.trim().toLowerCase();
+ const filtered=records.filter(r=>(r.name+" "+r.number+" "+r.id+" "+r.service).toLowerCase().includes(q));
+ $("records").innerHTML=filtered.map(r=>'<div class="record"><div class="recordhead"><div><strong>'+r.name+' · '+r.service+'</strong><p>'+r.number+' · '+r.kind+' · '+r.date+'</p></div><div style="text-align:left"><strong>'+r.amount.toLocaleString("en-US")+' دج</strong><div class="status '+(r.status==="قيد المعالجة"?"pending":r.status==="فاشلة"?"failed":"")+'">'+r.status+'</div></div></div><div class="details">مرجع KIOQ: '+r.id+'<br>المبلغ المخصوم من رصيدك: '+r.deduct+' دج<br>تفاصيل تكلفة OneClick الداخلية غير معروضة في حساب التاجر.</div></div>').join("")||'<p class="muted">لا توجد نتائج.</p>';
+ $("recordCount").textContent=records.length;
+ $("recordTotal").textContent=records.reduce((s,r)=>s+(r.status==="ناجحة"?r.amount:0),0).toLocaleString("en-US")+" دج";
+ $("successCount").textContent=records.filter(r=>r.status==="ناجحة").length;
+}
+document.querySelectorAll("[data-service]").forEach(b=>b.addEventListener("click",()=>{service=b.dataset.service;updateService()}));
+document.querySelectorAll("[data-kind]").forEach(b=>b.addEventListener("click",()=>{kind=b.dataset.kind;document.querySelectorAll("[data-kind]").forEach(x=>x.classList.toggle("active",x===b));updateService()}));
+$("number").addEventListener("input",e=>{e.target.value=normalizePhone(e.target.value);renderSuggestions()});
+$("idoomNumber").addEventListener("input",e=>{let v=e.target.value.replace(/\D/g,"");if(service==="4G"){if(!v.startsWith("213"))v="213"+v.replace(/^0/,"");e.target.value=v.slice(0,12)}else{if(!v.startsWith("0"))v="0"+v;e.target.value=v.slice(0,10)}renderSuggestions()});
+$("quickAmounts").addEventListener("click",e=>{if(e.target.dataset.amount){$("amount").value=e.target.dataset.amount;document.querySelectorAll("[data-amount]").forEach(b=>b.classList.toggle("chosen",b===e.target))}});
+$("contactSearch").addEventListener("input",renderContacts);$("recordSearch").addEventListener("input",renderRecords);
+document.addEventListener("click",e=>{
+ const p=e.target.closest("[data-pick]");if(p){pickNumber(p.dataset.pick,p.dataset.type);renderContacts();return}
+ const call=e.target.closest("[data-call]");if(call){location.href="tel:"+call.dataset.call;return}
+ const wa=e.target.closest("[data-wa]");if(wa){let n=wa.dataset.wa.replace(/\D/g,"");if(n.startsWith("0"))n="213"+n.slice(1);window.open("https://wa.me/"+n,"_blank");return}
+});
+$("addContact").onclick=()=>$("modal").classList.remove("hidden");$("closeModal").onclick=()=>$("modal").classList.add("hidden");
+$("saveContact").onclick=()=>{const first=$("firstName").value.trim(),last=$("lastName").value.trim(),number=$("contactNumber").value.replace(/\D/g,""),type=$("contactType").value;if(!first||!last||!number){alert("أكمل الاسم واللقب والرقم");return}if(contacts.some(c=>c.number===number&&c.type===type)){alert("جهة الاتصال موجودة بالفعل");return}contacts.unshift({first,last,number,type,lastRecharge:"لا توجد"});$("modal").classList.add("hidden");["firstName","lastName","contactNumber"].forEach(id=>$(id).value="");renderContacts()};
+$("submitRecharge").onclick=()=>{const n=selectedNumber(),a=Number($("amount").value);if(!n){alert("أدخل رقم الزبون أولاً");return}if(kind==="normal"&&(!a||a<=0)){alert("أدخل مبلغاً صحيحاً");return}if(kind==="offers"){alert("لا توجد عروض فعلية محملة بعد. يجب ربط OneClick قبل إظهار العروض أو اختيارها.");return}if(service==="Fibre"&&!/^0\d{8,9}$/.test(n)){alert("تحقق من رقم IDoom Fibre");return}if(service==="4G"&&!/^213\d{9}$/.test(n)){alert("تحقق من رقم IDoom 4G");return}if(!isIdoom()&&!new RegExp("^"+services[service].prefix+"\\d{8}$").test(n)){alert("رقم الهاتف غير مطابق لصيغة الشبكة");return}alert("هذه نسخة تجريبية فقط. لم يتم إرسال أي طلب أو خصم أي رصيد.");};
+renderQuick();updateService();renderRecords();
+</script></body></html>
