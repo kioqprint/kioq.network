@@ -15,6 +15,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -23,6 +25,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 
+private val KioqGreen=Color(0xFF075B3D)
+private val KioqGreenDark=Color(0xFF03452F)
+private val KioqRed=Color(0xFFD83A45)
+private val KioqBackground=Color(0xFFF5F8F6)
 private val services=listOf("Djezzy","Ooredoo","Mobilis","IDoom Fibre","IDoom 4G")
 private val quickAmounts=listOf("50","100","200","500","1000","1500","2000")
 private data class Contact(val id:Long=0,val first:String,val last:String,val number:String,val service:String) { val fullName:String get()="$first $last" }
@@ -50,8 +56,20 @@ private class ContactDb(ctx:Context):SQLiteOpenHelper(ctx,"kioq_contacts.db",nul
 }
 class MainActivity:ComponentActivity() {
  override fun onCreate(savedInstanceState:Bundle?) { super.onCreate(savedInstanceState);setContent {
-  CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) { MaterialTheme { Surface(Modifier.fillMaxSize()) { RechargeScreen() } } }
+  CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+   MaterialTheme(colorScheme=lightColorScheme(primary=KioqGreen,onPrimary=Color.White,secondary=KioqRed,onSecondary=Color.White,tertiary=Color(0xFFB58A32),background=KioqBackground,surface=Color.White,surfaceVariant=Color(0xFFEAF1ED),onSurface=Color(0xFF17251E),onSurfaceVariant=Color(0xFF52645A))) {
+    Surface(Modifier.fillMaxSize(),color=KioqBackground) { RechargeScreen() }
+   }
+  }
  } }
+}
+@Composable private fun BrandMark() {
+ Surface(shape=RoundedCornerShape(19.dp),color=Color.White,modifier=Modifier.size(58.dp)) {
+  Box(contentAlignment=Alignment.Center) {
+   Text("K",fontWeight=FontWeight.Black,color=KioqGreenDark,style=MaterialTheme.typography.headlineLarge)
+   Box(Modifier.align(Alignment.TopEnd).padding(8.dp).size(8.dp).background(KioqRed,androidx.compose.foundation.shape.CircleShape))
+  }
+ }
 }
 private fun normalize(raw:String,service:String):String {
  val digits=raw.filter(Char::isDigit)
@@ -81,11 +99,26 @@ private fun normalize(raw:String,service:String):String {
  Scaffold { pad ->
   LazyColumn(Modifier.fillMaxSize().padding(pad).padding(horizontal=16.dp),verticalArrangement=Arrangement.spacedBy(13.dp)) {
    item {
-    Column(Modifier.padding(top=22.dp)) {
-     Text("KIOQ.network",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold,color=MaterialTheme.colorScheme.primary)
-     Text("منصة تعبئة الهاتف والإنترنت لتجار التجزئة")
-     Text("واجهة تجريبية · لا يوجد اتصال بالخادم",style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.secondary)
+    Card(Modifier.fillMaxWidth().padding(top=12.dp),shape=RoundedCornerShape(26.dp),colors=CardDefaults.cardColors(containerColor=KioqGreenDark),elevation=CardDefaults.cardElevation(defaultElevation=3.dp)) {
+     Row(Modifier.fillMaxWidth().padding(horizontal=18.dp,vertical=19.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(13.dp)) {
+      BrandMark()
+      Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(3.dp)) {
+       Text("KIOQ.network",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.ExtraBold,color=Color.White)
+       Text("منصتك الذكية لتعبئة الرصيد",style=MaterialTheme.typography.bodyMedium,color=Color(0xFFE3F2E9))
+       Text("الهاتف والإنترنت · الجزائر",style=MaterialTheme.typography.labelSmall,color=Color(0xFFB9D8C7))
+      }
+     }
     }
+    Card(Modifier.fillMaxWidth(),shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
+     Row(Modifier.fillMaxWidth().padding(15.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+      Text("●",color=KioqRed)
+      Column {
+       Text("مرحباً بك في KIOQ.network",fontWeight=FontWeight.Bold,color=KioqGreenDark)
+       Text("إدارة تعبئات الهاتف والإنترنت بسهولة",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+      }
+     }
+    }
+    Text("واجهة تجريبية · لا يوجد اتصال بالخادم",style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.secondary)
    }
    item {
     Card { Column(Modifier.padding(15.dp),verticalArrangement=Arrangement.spacedBy(9.dp)) {
