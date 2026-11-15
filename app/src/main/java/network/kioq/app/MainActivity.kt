@@ -100,26 +100,40 @@ private fun normalize(raw:String,service:String):String {
  Scaffold { pad ->
   LazyColumn(Modifier.fillMaxSize().padding(pad).padding(horizontal=16.dp),verticalArrangement=Arrangement.spacedBy(13.dp)) {
    item {
-    Card(Modifier.fillMaxWidth().padding(top=12.dp),shape=RoundedCornerShape(26.dp),colors=CardDefaults.cardColors(containerColor=KioqGreenDark),elevation=CardDefaults.cardElevation(defaultElevation=3.dp)) {
-     Row(Modifier.fillMaxWidth().padding(horizontal=18.dp,vertical=19.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(13.dp)) {
-      BrandMark()
-      Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(3.dp)) {
-       Text("KIOQ.network",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.ExtraBold,color=Color.White)
-       Text("منصتك الذكية لتعبئة الرصيد",style=MaterialTheme.typography.bodyMedium,color=Color(0xFFE3F2E9))
-       Text("الهاتف والإنترنت · الجزائر",style=MaterialTheme.typography.labelSmall,color=Color(0xFFB9D8C7))
+    Card(Modifier.fillMaxWidth().padding(top=14.dp),shape=RoundedCornerShape(28.dp),colors=CardDefaults.cardColors(containerColor=KioqGreenDark),elevation=CardDefaults.cardElevation(defaultElevation=4.dp)) {
+     Column(Modifier.fillMaxWidth().padding(20.dp),verticalArrangement=Arrangement.spacedBy(17.dp)) {
+      Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {
+       BrandMark()
+       Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(4.dp)) {
+        Text("KIOQ.network",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.ExtraBold,color=Color.White)
+        Text("منصة خدمات الهاتف والإنترنت",style=MaterialTheme.typography.bodyMedium,color=Color(0xFFE3F2E9))
+        Text("حلول تعبئة موثوقة في الجزائر",style=MaterialTheme.typography.labelSmall,color=Color(0xFFB9D8C7))
+       }
+      }
+      HorizontalDivider(color=Color(0x5579A992))
+      Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
+       Column(verticalArrangement=Arrangement.spacedBy(3.dp)) {
+        Text("أهلاً بك",style=MaterialTheme.typography.labelMedium,color=Color(0xFFB9D8C7))
+        Text("كل خدماتك في مكان واحد",style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.Bold,color=Color.White)
+       }
+       Surface(shape=RoundedCornerShape(50.dp),color=Color(0xFF1B7654)) {
+        Text("KIOQ",Modifier.padding(horizontal=15.dp,vertical=8.dp),color=Color.White,fontWeight=FontWeight.Bold)
+       }
       }
      }
     }
     Card(Modifier.fillMaxWidth(),shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
-     Row(Modifier.fillMaxWidth().padding(15.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
-      Text("●",color=KioqRed)
-      Column {
-       Text("مرحباً بك في KIOQ.network",fontWeight=FontWeight.Bold,color=KioqGreenDark)
-       Text("إدارة تعبئات الهاتف والإنترنت بسهولة",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+     Row(Modifier.fillMaxWidth().padding(15.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(11.dp)) {
+      Surface(shape=RoundedCornerShape(13.dp),color=Color(0xFFFFEDEF),modifier=Modifier.size(42.dp)) {
+       Box(contentAlignment=Alignment.Center) { Text("↗",color=KioqRed,fontWeight=FontWeight.Black,style=MaterialTheme.typography.titleLarge) }
+      }
+      Column(verticalArrangement=Arrangement.spacedBy(3.dp)) {
+       Text("خدمات التعبئة",fontWeight=FontWeight.Bold,color=KioqGreenDark)
+       Text("اختر الشبكة وأدخل الرقم والمبلغ للمتابعة",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
       }
      }
     }
-    Text("واجهة تجريبية · لا يوجد اتصال بالخادم",style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.secondary)
+    Text("نسخة أولية · العمليات غير مفعّلة بعد",style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.secondary)
    }
    item {
     Card { Column(Modifier.padding(15.dp),verticalArrangement=Arrangement.spacedBy(9.dp)) {
@@ -146,7 +160,7 @@ private fun normalize(raw:String,service:String):String {
       quickAmounts.chunked(4).forEach { group -> Row(horizontalArrangement=Arrangement.spacedBy(4.dp)) {
        group.forEach { a -> FilterChip(selected=amount==a,onClick={amount=a},label={Text(a)}) }
       } }
-     } else Text("العروض الفعلية ستظهر بعد ربط OneClick. لا نعرض عروضاً افتراضية.")
+     } else Text("العروض المتاحة ستظهر هنا عند تفعيل الخدمة.")
      OutlinedButton(onClick={editing=null;dialog=true},modifier=Modifier.fillMaxWidth()) { Text("حفظ الرقم كجهة اتصال") }
      Button(onClick={message="نموذج فقط: لم يُرسل طلب ولم يُخصم رصيد."},modifier=Modifier.fillMaxWidth()) { Text("تأكيد تجريبي") }
      Text(message,style=MaterialTheme.typography.bodySmall)
@@ -189,12 +203,12 @@ private fun normalize(raw:String,service:String):String {
     TextButton(onClick={expanded=if(expanded==r.id)null else r.id}) { Text(if(expanded==r.id)"إخفاء التفاصيل" else "تفاصيل العملية") }
     if(expanded==r.id) {
      HorizontalDivider();Text("رقم العملية: "+r.id);Text("قيمة التعبئة: "+r.amount+" دج");Text("المبلغ المخصوم من رصيدك: "+r.deducted+" دج")
-     Text("تكلفة OneClick والهوامش والمراجع الداخلية لا تظهر للتاجر.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.secondary)
+     
     }
    } } }
    item {
     Card(colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surfaceVariant)) {
-     Text("ملاحظة: جهات الاتصال محفوظة محلياً. سجل العمليات والعروض والرصيد والتعبئات الحقيقية تحتاج إلى الخادم المركزي وربط OneClick. لا توجد مزامنة أو مصادقة بعد.",Modifier.padding(13.dp),style=MaterialTheme.typography.bodySmall)
+     Text("ملاحظة: جهات الاتصال محفوظة محلياً. سجل العمليات والعروض والرصيد والتعبئات الحقيقية تحتاج إلى تفعيل الخادم المركزي. لا توجد مزامنة أو مصادقة بعد.",Modifier.padding(13.dp),style=MaterialTheme.typography.bodySmall)
     }
     Spacer(Modifier.height(24.dp))
    }
