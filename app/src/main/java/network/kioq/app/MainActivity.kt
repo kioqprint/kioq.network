@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -113,11 +114,13 @@ private fun networkFor(number:String,selected:String):String {
  var editing by remember { mutableStateOf<Contact?>(null) }
  var message by remember { mutableStateOf("هذه واجهة تجريبية؛ لم يتم إرسال أي طلب أو خصم رصيد.") }
  val detected=networkFor(number,service)
+ val drawerState=rememberDrawerState(DrawerValue.Closed)
+ LaunchedEffect(drawer) { if(drawer) drawerState.open() else drawerState.close() }
  val recent=contacts.filter { it.service==service && (number.isBlank() || it.number.contains(number) || it.fullName.contains(number,true)) }.take(4)
  val contactList=contacts.filter { (it.fullName+" "+it.number+" "+it.service).contains(contactQuery.trim(),true) }
  val records=demoRecords.filter { (it.id+it.name+it.number+it.service).contains(historyQuery.trim(),true) && (statusFilter=="الكل" || it.status==statusFilter) }
  ModalNavigationDrawer(
-  drawerState=rememberDrawerState(if(drawer) DrawerValue.Open else DrawerValue.Closed),
+  drawerState=drawerState,
   gesturesEnabled=true,
   drawerContent={
    ModalDrawerSheet(drawerContainerColor=Color.White) {
