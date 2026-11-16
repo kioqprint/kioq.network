@@ -266,7 +266,9 @@ private fun networkFor(number:String,selected:String):String {
      "الإشعارات" -> InfoPage("الإشعارات","تنبيهات الطلبات وحالات التعبئة والمدفوعات.","لا توجد إشعارات فعلية في النسخة التجريبية.")
      "المحادثات" -> InfoPage("المحادثات","مساحة تواصل بين المالك والتجار.","المحادثات تحتاج إلى الخادم المركزي لتعمل.")
      "التقارير والإحصائيات" -> InfoPage("التقارير والإحصائيات","ملخص العمليات والمبيعات والديون والأرباح.","ستظهر البيانات الحقيقية بعد ربط الخادم.")
-     else -> BannerSettingsPage(bannerText,{bannerText=it;prefs.edit().putString("text",it).apply()},textSize,{textSize=it;prefs.edit().putFloat("textSize",it).apply()},textSpeed,{textSpeed=it;prefs.edit().putFloat("textSpeed",it).apply()},imageHeight,{imageHeight=it;prefs.edit().putFloat("imageHeight",it).apply()},imageSpeed,{imageSpeed=it;prefs.edit().putFloat("imageSpeed",it).apply()},imageUris,onAddImage={if(imageUris.size<5) imagePicker.launch(arrayOf("image/*"))},onDeleteImage={uri->imageUris=imageUris.filterNot{it==uri};prefs.edit().putString("images",imageUris.joinToString("|")).apply()})
+     "إعدادات البانرات" -> BannerSettingsPage(bannerText,{bannerText=it;prefs.edit().putString("text",it).apply()},textSize,{textSize=it;prefs.edit().putFloat("textSize",it).apply()},textSpeed,{textSpeed=it;prefs.edit().putFloat("textSpeed",it).apply()},imageHeight,{imageHeight=it;prefs.edit().putFloat("imageHeight",it).apply()},imageSpeed,{imageSpeed=it;prefs.edit().putFloat("imageSpeed",it).apply()},imageUris,onAddImage={if(imageUris.size<5) imagePicker.launch(arrayOf("image/*"))},onDeleteImage={uri->imageUris=imageUris.filterNot{it==uri};prefs.edit().putString("images",imageUris.joinToString("|")).apply()})
+     "الإعدادات" -> SettingsPage(prefs=prefs,onOpenBanners={page="إعدادات البانرات"})
+     else -> SettingsPage(prefs=prefs,onOpenBanners={page="إعدادات البانرات"})
     }
     }
    }
@@ -707,5 +709,108 @@ private fun networkFor(number:String,selected:String):String {
     }
    }
   }
+ }
+}
+
+
+@Composable private fun SettingsPage(
+ prefs: SharedPreferences,
+ onOpenBanners: () -> Unit
+) {
+ var rechargeAlerts by remember { mutableStateOf(prefs.getBoolean("setting_recharge_alerts", true)) }
+ var debtAlerts by remember { mutableStateOf(prefs.getBoolean("setting_debt_alerts", true)) }
+ var systemAlerts by remember { mutableStateOf(prefs.getBoolean("setting_system_alerts", true)) }
+ var dialogTitle by remember { mutableStateOf<String?>(null) }
+ var dialogText by remember { mutableStateOf("") }
+
+ LazyColumn(Modifier.fillMaxSize().padding(horizontal=16.dp, vertical=16.dp), verticalArrangement=Arrangement.spacedBy(13.dp)) {
+  item {
+   Card(shape=RoundedCornerShape(23.dp), colors=CardDefaults.cardColors(containerColor=Color.Transparent)) {
+    Column(Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(GreenDark, Green, GreenBright)), RoundedCornerShape(23.dp)).padding(19.dp), verticalArrangement=Arrangement.spacedBy(6.dp)) {
+     Text("مركز إعدادات KIOQ.network", color=Color.White, style=MaterialTheme.typography.titleLarge, fontWeight=FontWeight.ExtraBold)
+     Text("إدارة الحساب والتطبيق والخدمات من مكان واحد", color=Color(0xFFD9F2E4), style=MaterialTheme.typography.bodySmall)
+    }
+   }
+  }
+  item { SettingsGroup("الحساب والملف الشخصي", "إدارة معلومات الحساب") {
+   SettingsAction("الملف التجاري", "الاسم التجاري ورقم الهاتف وبيانات النشاط", "account-circle") { dialogTitle="الملف التجاري"; dialogText="سيتم عرض وتعديل بيانات الحساب بعد ربط نظام تسجيل الدخول والخادم المركزي. لا يتم إنشاء بيانات حساب وهمية على هذا الجهاز." }
+   SettingsAction("كلمة المرور والجلسات", "تغيير كلمة المرور وإدارة الأجهزة المتصلة", "lock") { dialogTitle="الأمان والحماية"; dialogText="تغيير كلمة المرور وإدارة الجلسات يتطلبان خدمة مصادقة آمنة على الخادم. لن نخزن كلمات المرور داخل التطبيق." }
+  } }
+  item { SettingsGroup("الأمان والحماية", "حماية الحساب والبيانات") {
+   SettingsAction("قفل التطبيق والبصمة", "قفل محلي بالبصمة أو رمز PIN", "fingerprint") { dialogTitle="قفل التطبيق"; dialogText="هذه الميزة تحتاج إلى إعداد آلية قفل آمنة وإدارة PIN. لم يتم تفعيل قفل شكلي قد يوحي بحماية غير موجودة." }
+   SettingsAction("سجل الدخول والأجهزة", "مراجعة الجلسات والأجهزة", "devices") { dialogTitle="الأجهزة والجلسات"; dialogText="ستتوفر هذه المعلومات بعد ربط المصادقة بالخادم." }
+  } }
+  item { SettingsGroup("المظهر والتخصيص", "تفضيلات عرض التطبيق") {
+   SettingsAction("إدارة البانرات", "تعديل النص والصور والسرعة والارتفاع", "image", onOpenBanners)
+   SettingsAction("اللغة وحجم الخط والألوان", "تخصيص الواجهة والوضع الداكن", "palette") { dialogTitle="المظهر والتخصيص"; dialogText="الواجهة الحالية عربية وبتصميم أخضر فاتح. سنضيف تبديل الوضع الداكن واللغة وحجم الخط كتفضيلات شاملة بعد توحيد نظام السمات في جميع الصفحات." }
+  } }
+  item { SettingsGroup("الإشعارات", "تحكم في أنواع التنبيهات") {
+   SettingsToggle("تنبيهات التعبئة", "نجاح أو فشل أو تغير حالة العملية", rechargeAlerts) { rechargeAlerts=it; prefs.edit().putBoolean("setting_recharge_alerts",it).apply() }
+   SettingsToggle("تنبيهات الديون والمدفوعات", "الدفعات والمبالغ المستحقة", debtAlerts) { debtAlerts=it; prefs.edit().putBoolean("setting_debt_alerts",it).apply() }
+   SettingsToggle("تنبيهات النظام والتحديثات", "المزامنة وحالة التطبيق والتحديثات", systemAlerts) { systemAlerts=it; prefs.edit().putBoolean("setting_system_alerts",it).apply() }
+   Text("هذه التفضيلات تحفظ محلياً؛ إرسال إشعارات فعلية يتطلب ربط خدمة الإشعارات بالخادم.", style=MaterialTheme.typography.bodySmall, color=Color.Gray)
+  } }
+  item { SettingsGroup("إعدادات الخدمات", "التحكم في الخدمات المتاحة") {
+   SettingsAction("خدمات الهاتف والإنترنت", "Djezzy وOoredoo وMobilis وIDoom", "smartphone") { dialogTitle="إعدادات الخدمات"; dialogText="إظهار الخدمات وإخفاؤها من حسابات التجار سيكون من صلاحيات المالك، وسيتم تطبيقه مركزياً بعد ربط الخادم." }
+   SettingsAction("المبالغ والعروض", "إدارة مبالغ التعبئة والعروض المتاحة", "list") { dialogTitle="المبالغ والعروض"; dialogText="المبالغ السريعة الحالية: 50، 100، 200، 500، 1000، 1500، 2000 دج. إدارة القيم والعروض تحتاج صلاحية المالك ومصدراً مؤكداً للبيانات." }
+  } }
+  item { SettingsGroup("الإعدادات التجارية والمالية · المالك فقط", "لا تظهر هذه الصلاحيات للتاجر") {
+   SettingsAction("هوامش الربح وأسعار البيع", "ضبط هامش التاجر وهامش المالك", "percent") { dialogTitle="إعدادات الأرباح"; dialogText="إعدادات المالك فقط. ستُربط بقواعد التسعير والحسابات المركزية حتى لا تختلف الأسعار بين الأجهزة." }
+   SettingsAction("الصندوق والتقارير المالية", "إعدادات التحصيل والسحب والتقارير", "wallet") { dialogTitle="الصندوق والتقارير"; dialogText="تظل الأرباح تقارير محاسبية وليست محفظة مستقلة. لا يتم تفعيل تعديل مالي محلي قد يغيّر الأرصدة." }
+   SettingsAction("إدارة التجار والصلاحيات", "إضافة وتعطيل الحسابات وتحديد الصلاحيات", "users") { dialogTitle="إدارة التجار"; dialogText="إدارة حسابات التجار حتى 50 حساباً وصلاحياتهم تتطلب حساب المالك والخادم المركزي." }
+  } }
+  item { SettingsGroup("النسخ الاحتياطي والمزامنة", "متابعة سلامة البيانات") {
+   SettingsAction("حالة الاتصال والمزامنة", "آخر مزامنة وحالة الاتصال بالخادم", "cloud") { dialogTitle="المزامنة"; dialogText="الواجهة الحالية تعمل محلياً لبعض البيانات. لم يتم ربط الخادم المركزي بعد، لذلك لا توجد حالة مزامنة حقيقية لعرضها." }
+   SettingsAction("النسخ الاحتياطي والاستعادة", "حماية البيانات واسترجاعها", "database") { dialogTitle="النسخ الاحتياطي"; dialogText="قبل تفعيل النسخ والاستعادة سنحدد البيانات التي يشملها النسخ ونحميها بالتشفير والصلاحيات. لا يوجد حالياً نسخ احتياطي سحابي فعلي." }
+  } }
+  item { SettingsGroup("حول التطبيق والدعم", "معلومات ومساعدة") {
+   SettingsAction("الدعم والمساعدة", "التواصل والإبلاغ عن مشكلة", "help") { dialogTitle="الدعم والمساعدة"; dialogText="سيتم ربط مركز الدعم والمحادثات بالخادم حتى تصل الرسائل إلى الإدارة." }
+   SettingsAction("الخصوصية وشروط الاستخدام", "سياسة حماية البيانات وشروط الخدمة", "file") { dialogTitle="الخصوصية والشروط"; dialogText="ستُعرض الوثائق الرسمية المعتمدة هنا عند نشرها. لن نضع روابط أو شروطاً غير معتمدة." }
+   SettingsAction("حول KIOQ.network", "معلومات التطبيق والإصدار", "info") { dialogTitle="حول KIOQ.network"; dialogText="KIOQ.network — منصة خدمات الهاتف والإنترنت للتجار. رقم الإصدار سيُقرأ من بيانات التطبيق عند تجهيز شاشة معلومات الإصدار." }
+  } }
+  item { Text("ملاحظة: عناصر التحكم التي تتطلب خادماً أو صلاحيات غير متوفرة حالياً موضحة بوضوح، ولم نضع أزراراً توهم بأنها تنفذ عمليات غير مفعّلة.", style=MaterialTheme.typography.bodySmall, color=Color.Gray) }
+ }
+ if(dialogTitle!=null) {
+  AlertDialog(onDismissRequest={dialogTitle=null}, title={Text(dialogTitle!!, fontWeight=FontWeight.Bold, color=GreenDark)}, text={Text(dialogText, color=Color(0xFF52645A))}, confirmButton={TextButton(onClick={dialogTitle=null}) { Text("حسناً", color=Green, fontWeight=FontWeight.Bold) }}, shape=RoundedCornerShape(20.dp))
+ }
+}
+
+@Composable private fun SettingsGroup(title: String, subtitle: String, content: @Composable ColumnScope.() -> Unit) {
+ Card(shape=RoundedCornerShape(19.dp), elevation=CardDefaults.cardElevation(defaultElevation=1.dp)) {
+  Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement=Arrangement.spacedBy(9.dp)) {
+   Text(title, fontWeight=FontWeight.ExtraBold, color=GreenDark, style=MaterialTheme.typography.titleMedium)
+   Text(subtitle, style=MaterialTheme.typography.bodySmall, color=Color.Gray)
+   HorizontalDivider(color=Page)
+   content()
+  }
+ }
+}
+
+@Composable private fun SettingsAction(title: String, subtitle: String, symbol: String, onClick: () -> Unit) {
+ Row(Modifier.fillMaxWidth().clickable(onClick=onClick).padding(vertical=5.dp), verticalAlignment=Alignment.CenterVertically, horizontalArrangement=Arrangement.spacedBy(11.dp)) {
+  Surface(color=GreenSoft, shape=RoundedCornerShape(12.dp), modifier=Modifier.size(40.dp)) {
+   Box(contentAlignment=Alignment.Center) {
+    Text(when(symbol) {
+     "account-circle"->"◉"; "lock"->"⌑"; "fingerprint"->"◌"; "devices"->"▣"; "image"->"▧"; "palette"->"◈"
+     "smartphone"->"▯"; "list"->"☷"; "percent"->"%"; "wallet"->"▤"; "users"->"♙"; "cloud"->"☁"
+     "database"->"▦"; "help"->"?"; "file"->"▤"; else->"i"
+    }, color=Green, fontWeight=FontWeight.Bold, fontSize=18.sp)
+   }
+  }
+  Column(Modifier.weight(1f), verticalArrangement=Arrangement.spacedBy(2.dp)) {
+   Text(title, fontWeight=FontWeight.SemiBold, color=Color(0xFF20382B))
+   Text(subtitle, style=MaterialTheme.typography.bodySmall, color=Color.Gray)
+  }
+  Text("‹", color=Green, fontSize=25.sp, fontWeight=FontWeight.Bold)
+ }
+}
+
+@Composable private fun SettingsToggle(title: String, subtitle: String, checked: Boolean, onChecked: (Boolean) -> Unit) {
+ Row(Modifier.fillMaxWidth(), verticalAlignment=Alignment.CenterVertically, horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+  Column(Modifier.weight(1f), verticalArrangement=Arrangement.spacedBy(2.dp)) {
+   Text(title, fontWeight=FontWeight.SemiBold, color=Color(0xFF20382B))
+   Text(subtitle, style=MaterialTheme.typography.bodySmall, color=Color.Gray)
+  }
+  Switch(checked=checked, onCheckedChange=onChecked, colors=SwitchDefaults.colors(checkedThumbColor=Color.White, checkedTrackColor=Green))
  }
 }
