@@ -448,28 +448,118 @@ private fun networkFor(number:String,selected:String):String {
  }
 }
 @Composable private fun HistoryPage(query:String,onQuery:(String)->Unit,status:String,onStatus:(String)->Unit,records:List<RechargeRecord>,expanded:String?,onExpanded:(String?)->Unit) {
- LazyColumn(Modifier.fillMaxSize().padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-  item { Text("سجل التعبئة الكلي",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold);Text("بيانات توضيحية ثابتة وليست سجلاً حقيقياً.",style=MaterialTheme.typography.bodySmall,color=Color.Gray) }
-  item { OutlinedTextField(query,onQuery,Modifier.fillMaxWidth(),singleLine=true,label={Text("بحث بالعملية أو الاسم أو الرقم أو الشبكة")}) }
-  item { Row(horizontalArrangement=Arrangement.spacedBy(3.dp)) { listOf("الكل","ناجحة","قيد المعالجة","فاشلة").forEach { s->FilterChip(selected=status==s,onClick={onStatus(s)},label={Text(s)}) } } }
-  item { Text("عدد النتائج: "+records.size,style=MaterialTheme.typography.labelMedium) }
-  items(records,key={it.id}) { r->Card { Column(Modifier.padding(14.dp),verticalArrangement=Arrangement.spacedBy(5.dp)) {
-   Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) { Text(r.name,fontWeight=FontWeight.Bold);Text(r.status,color=if(r.status=="فاشلة")Red else Green) }
-   Text(r.number+" · "+r.service);Text(r.kind+" · "+r.amount+" دج · "+r.date,style=MaterialTheme.typography.bodySmall)
-   TextButton(onClick={onExpanded(if(expanded==r.id)null else r.id)}) { Text(if(expanded==r.id)"إخفاء التفاصيل" else "تفاصيل العملية") }
-   if(expanded==r.id) { HorizontalDivider();Text("رقم العملية: "+r.id);Text("قيمة التعبئة: "+r.amount+" دج");Text("المبلغ المخصوم من رصيدك: "+r.deducted+" دج") }
-  } } }
+ LazyColumn(Modifier.fillMaxSize().padding(horizontal=16.dp,vertical=18.dp),verticalArrangement=Arrangement.spacedBy(13.dp)) {
+  item {
+   Card(shape=RoundedCornerShape(23.dp),colors=CardDefaults.cardColors(containerColor=Color.Transparent)) {
+    Row(Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(GreenDark,Green,GreenBright)),RoundedCornerShape(23.dp)).padding(18.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(13.dp)) {
+     Surface(color=Color(0x33FFFFFF),shape=RoundedCornerShape(16.dp),modifier=Modifier.size(48.dp)){Box(contentAlignment=Alignment.Center){Text("↻",color=Color.White,fontSize=26.sp,fontWeight=FontWeight.Bold)}}
+     Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(4.dp)) {
+      Text("سجل التعبئة الكلي",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.ExtraBold,color=Color.White)
+      Text("راجع العمليات وابحث في تفاصيلها",style=MaterialTheme.typography.bodySmall,color=Color(0xFFD9F2E4))
+     }
+     Text(records.size.toString(),fontSize=22.sp,fontWeight=FontWeight.Black,color=Color.White)
+    }
+   }
+   Text("بيانات توضيحية ثابتة وليست سجلاً حقيقياً.",Modifier.padding(start=5.dp,top=5.dp),style=MaterialTheme.typography.labelSmall,color=Color.Gray)
+  }
+  item {
+   OutlinedTextField(query,onQuery,Modifier.fillMaxWidth(),singleLine=true,label={Text("بحث بالعملية أو الاسم أو الرقم أو الشبكة")},shape=RoundedCornerShape(16.dp),leadingIcon={Text("⌕",fontSize=24.sp,color=Green)})
+  }
+  item {
+   Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+    listOf("الكل","ناجحة","قيد المعالجة","فاشلة").forEach { s ->
+     FilterChip(selected=status==s,onClick={onStatus(s)},label={Text(s,fontWeight=if(status==s) FontWeight.Bold else FontWeight.Medium)},modifier=Modifier.weight(1f),shape=RoundedCornerShape(13.dp))
+    }
+   }
+  }
+  items(records,key={it.id}) { r ->
+   Card(shape=RoundedCornerShape(19.dp),elevation=CardDefaults.cardElevation(defaultElevation=2.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
+    Column(Modifier.fillMaxWidth().padding(15.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+     Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(9.dp)) {
+      NetworkMark(r.service)
+      Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(2.dp)) {
+       Text(r.name,fontWeight=FontWeight.Bold,color=GreenDark)
+       Text(r.number,style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+      }
+      Surface(color=if(r.status=="فاشلة") Color(0xFFFFE9EA) else if(r.status=="ناجحة") GreenSoft else Color(0xFFFFF4D9),shape=RoundedCornerShape(20.dp)) {
+       Text(r.status,Modifier.padding(horizontal=10.dp,vertical=6.dp),style=MaterialTheme.typography.labelSmall,fontWeight=FontWeight.Bold,color=if(r.status=="فاشلة") Red else if(r.status=="ناجحة") GreenDark else Color(0xFF8A6414))
+      }
+     }
+     HorizontalDivider(color=Page)
+     Row(verticalAlignment=Alignment.CenterVertically) {
+      Column(Modifier.weight(1f)) {
+       Text(r.kind,style=MaterialTheme.typography.labelSmall,color=Color.Gray)
+       Text(r.amount.toString()+" دج",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.ExtraBold,color=GreenDark)
+      }
+      Column(horizontalAlignment=Alignment.End) {
+       Text(r.date,style=MaterialTheme.typography.labelSmall,color=Color.Gray)
+       Text(r.id,style=MaterialTheme.typography.labelMedium,fontWeight=FontWeight.SemiBold,color=Green)
+      }
+     }
+     OutlinedButton(onClick={onExpanded(if(expanded==r.id)null else r.id)},modifier=Modifier.fillMaxWidth().height(43.dp),shape=RoundedCornerShape(13.dp)) {
+      Text(if(expanded==r.id)"إخفاء التفاصيل" else "عرض تفاصيل العملية")
+     }
+     if(expanded==r.id) {
+      Column(Modifier.fillMaxWidth().background(Page,RoundedCornerShape(13.dp)).padding(12.dp),verticalArrangement=Arrangement.spacedBy(5.dp)) {
+       Text("رقم العملية: "+r.id,style=MaterialTheme.typography.bodySmall)
+       Text("قيمة التعبئة: "+r.amount+" دج",style=MaterialTheme.typography.bodySmall)
+       Text("المبلغ المخصوم من رصيدك: "+r.deducted+" دج",style=MaterialTheme.typography.bodySmall,fontWeight=FontWeight.Bold,color=GreenDark)
+      }
+     }
+    }
+   }
+  }
  }
 }
 @Composable private fun ContactsPage(query:String,onQuery:(String)->Unit,contacts:List<Contact>,onAdd:()->Unit,onUse:(Contact)->Unit,onEdit:(Contact)->Unit,onDelete:(Contact)->Unit,onCall:(String)->Unit) {
- LazyColumn(Modifier.fillMaxSize().padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-  item { Text("الزبائن والتجار",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold);Text("دفتر جهات الاتصال المحفوظ محلياً على هذا الجهاز.",style=MaterialTheme.typography.bodySmall,color=Color.Gray) }
-  item { OutlinedTextField(query,onQuery,Modifier.fillMaxWidth(),singleLine=true,label={Text("بحث بالاسم أو الرقم أو الخدمة")});Button(onClick=onAdd,modifier=Modifier.fillMaxWidth()) { Text("إضافة جهة اتصال") } }
-  if(contacts.isEmpty()) item { Text("لا توجد جهات اتصال مطابقة.") }
-  items(contacts,key={it.id}) { c->Card { Column(Modifier.padding(13.dp)) {
-   Text(c.fullName,fontWeight=FontWeight.Bold);Text(c.number+" · "+c.service,style=MaterialTheme.typography.bodySmall)
-   Row(horizontalArrangement=Arrangement.spacedBy(2.dp)) { TextButton(onClick={onUse(c)}){Text("استخدام")};TextButton(onClick={onEdit(c)}){Text("تعديل")};TextButton(onClick={onDelete(c)}){Text("حذف")};TextButton(onClick={onCall(c.number)}){Text("اتصال")} }
-  } } }
+ LazyColumn(Modifier.fillMaxSize().padding(horizontal=16.dp,vertical=18.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
+  item {
+   Card(shape=RoundedCornerShape(23.dp),colors=CardDefaults.cardColors(containerColor=Color.Transparent)) {
+    Row(Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(GreenDark,Green,GreenBright)),RoundedCornerShape(23.dp)).padding(18.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+     Surface(color=Color(0x33FFFFFF),shape=RoundedCornerShape(16.dp),modifier=Modifier.size(48.dp)){Box(contentAlignment=Alignment.Center){Text("♙",color=Color.White,fontSize=25.sp)}}
+     Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(4.dp)) {
+      Text("الزبائن والتجار",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.ExtraBold,color=Color.White)
+      Text("دفتر أرقامك وخدماتك المحفوظة",style=MaterialTheme.typography.bodySmall,color=Color(0xFFD9F2E4))
+     }
+     Text(contacts.size.toString(),fontSize=22.sp,fontWeight=FontWeight.Black,color=Color.White)
+    }
+   }
+  }
+  item {
+   OutlinedTextField(query,onQuery,Modifier.fillMaxWidth(),singleLine=true,label={Text("بحث بالاسم أو الرقم أو الخدمة")},shape=RoundedCornerShape(16.dp),leadingIcon={Text("⌕",fontSize=24.sp,color=Green)})
+   Spacer(Modifier.height(9.dp))
+   Button(onClick=onAdd,modifier=Modifier.fillMaxWidth().height(52.dp),shape=RoundedCornerShape(15.dp)) { Text("＋  إضافة جهة اتصال",fontWeight=FontWeight.Bold) }
+  }
+  if(contacts.isEmpty()) item {
+   Card(shape=RoundedCornerShape(18.dp),colors=CardDefaults.cardColors(containerColor=GreenSoft)) {
+    Column(Modifier.fillMaxWidth().padding(22.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(7.dp)) {
+     Text("♙",fontSize=30.sp,color=Green)
+     Text("لا توجد جهات اتصال مطابقة",fontWeight=FontWeight.Bold,color=GreenDark)
+     Text("أضف جهة اتصال لتسهيل عمليات التعبئة القادمة",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+    }
+   }
+  }
+  items(contacts,key={it.id}) { c ->
+   Card(shape=RoundedCornerShape(18.dp),elevation=CardDefaults.cardElevation(defaultElevation=2.dp)) {
+    Column(Modifier.fillMaxWidth().padding(14.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+     Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+      Surface(color=GreenSoft,shape=CircleShape,modifier=Modifier.size(44.dp)){Box(contentAlignment=Alignment.Center){Text(c.first.take(1),fontWeight=FontWeight.ExtraBold,color=GreenDark,fontSize=18.sp)}}
+      Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(3.dp)) {
+       Text(c.fullName,fontWeight=FontWeight.Bold,color=GreenDark)
+       Text(c.number,style=MaterialTheme.typography.bodyMedium,color=Color.Gray)
+      }
+      NetworkMark(c.service)
+     }
+     HorizontalDivider(color=Page)
+     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+      Button(onClick={onUse(c)},modifier=Modifier.weight(1.2f).height(42.dp),shape=RoundedCornerShape(12.dp)) { Text("استخدام",fontWeight=FontWeight.Bold) }
+      OutlinedButton(onClick={onCall(c.number)},modifier=Modifier.weight(1f).height(42.dp),shape=RoundedCornerShape(12.dp)) { Text("اتصال") }
+      TextButton(onClick={onEdit(c)}) { Text("تعديل") }
+      TextButton(onClick={onDelete(c)}) { Text("حذف",color=Red) }
+     }
+    }
+   }
+  }
  }
 }
 @Composable private fun BannerSettingsPage(
@@ -501,6 +591,43 @@ private fun networkFor(number:String,selected:String):String {
  }
 }
 
+@Composable private fun InfoPage(title:String,description:String,note:String) {
+ val symbol=when(title) { "الديون والمدفوعات"->"د"; "الأرباح والمداخيل"->"٪"; "الصندوق والسحوبات"->"ص"; "الإشعارات"->"♢"; "المحادثات"->"✉"; else->"▥" }
+ LazyColumn(Modifier.fillMaxSize().padding(horizontal=16.dp,vertical=18.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
+  item {
+   Card(shape=RoundedCornerShape(24.dp),colors=CardDefaults.cardColors(containerColor=Color.Transparent)) {
+    Row(Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(GreenDark,Green,GreenBright)),RoundedCornerShape(24.dp)).padding(20.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {
+     Surface(color=Color(0x33FFFFFF),shape=RoundedCornerShape(17.dp),modifier=Modifier.size(54.dp)){Box(contentAlignment=Alignment.Center){Text(symbol,color=Color.White,fontSize=26.sp,fontWeight=FontWeight.Black)}}
+     Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(5.dp)) {
+      Text(title,style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.ExtraBold,color=Color.White)
+      Text(description,style=MaterialTheme.typography.bodySmall,color=Color(0xFFD9F2E4))
+     }
+    }
+   }
+  }
+  item {
+   Card(shape=RoundedCornerShape(20.dp),elevation=CardDefaults.cardElevation(defaultElevation=2.dp)) {
+    Column(Modifier.fillMaxWidth().padding(18.dp),verticalArrangement=Arrangement.spacedBy(11.dp)) {
+     Text("نظرة عامة",fontWeight=FontWeight.ExtraBold,color=GreenDark,style=MaterialTheme.typography.titleMedium)
+     Text(note,style=MaterialTheme.typography.bodyMedium,color=Color(0xFF52645A))
+     HorizontalDivider(color=Page)
+     Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(9.dp)) {
+      Surface(color=GreenSoft,shape=CircleShape,modifier=Modifier.size(34.dp)){Box(contentAlignment=Alignment.Center){Text("i",fontWeight=FontWeight.Black,color=Green)}}
+      Text("تُعرض المعلومات حسب صلاحيات الحساب بعد ربط النظام.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+     }
+    }
+   }
+  }
+  item {
+   Card(shape=RoundedCornerShape(18.dp),colors=CardDefaults.cardColors(containerColor=GreenSoft)) {
+    Row(Modifier.fillMaxWidth().padding(15.dp),verticalAlignment=Alignment.Top,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+     Text("✦",color=Green,fontSize=20.sp)
+     Text("سيتم تفعيل البيانات والعمليات الفعلية بعد تجهيز الخادم وربط الحسابات والصلاحيات.",Modifier.weight(1f),style=MaterialTheme.typography.bodySmall,color=GreenDark)
+    }
+   }
+  }
+ }
+}
 @Composable private fun InfoPage(title:String,description:String,note:String) {
  LazyColumn(Modifier.fillMaxSize().padding(16.dp),verticalArrangement=Arrangement.spacedBy(13.dp)) {
   item { Card(shape=RoundedCornerShape(22.dp)) { Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
