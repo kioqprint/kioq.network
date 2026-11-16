@@ -113,7 +113,7 @@ private fun networkFor(number:String,selected:String):String {
 @Composable private fun NetworkMark(service:String,large:Boolean=false) {
  val color=when(service) { "Djezzy"->Color(0xFFD92732); "Ooredoo"->Color(0xFFE51D2A); "Mobilis"->Color(0xFF0876B9); "IDoom Fibre","IDoom 4G"->Green; else->Green }
  Surface(color=color,shape=RoundedCornerShape(12.dp)) {
-  Text(when(service) { "Djezzy"->"D"; "Ooredoo"->"O"; "Mobilis"->"M"; "IDoom Fibre"->"F"; "IDoom 4G"->"4G"; else->"K" },
+  Text(when(service) { "Djezzy"->"D"; "Ooredoo"->"O"; "Mobilis"->"M"; "IDoom Fibre"->"F"; "IDoom 4G"->"4G"; "IDoom"->"I"; else->"K" },
    Modifier.padding(horizontal=if(large)14.dp else 10.dp,vertical=if(large)9.dp else 6.dp),color=Color.White,fontWeight=FontWeight.Black)
  }
 }
