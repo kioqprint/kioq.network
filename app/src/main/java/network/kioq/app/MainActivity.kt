@@ -452,20 +452,22 @@ private fun serviceLabel(service:String):String = when(service) {
        }
       }
      }
-     HorizontalDivider(color=Page)
-     Text("نوع العملية",fontWeight=FontWeight.Bold,color=GreenDark)
-     Row(Modifier.fillMaxWidth().background(Page,RoundedCornerShape(14.dp)).padding(4.dp),horizontalArrangement=Arrangement.spacedBy(5.dp)) {
-      listOf("مبلغ متغير (Dynamic Plan)","العروض حسب الرقم (GETMENU)").forEach { option ->
-       val selected=kind==option
-       Surface(
-        modifier=Modifier.weight(1f).clickable { onKind(option) },
-        color=if(selected) Color.White else Color.Transparent,
-        shape=RoundedCornerShape(11.dp),
-        shadowElevation=if(selected) 1.dp else 0.dp
-       ) { Box(Modifier.padding(vertical=11.dp),contentAlignment=Alignment.Center) {
-        Text(option,style=MaterialTheme.typography.labelLarge,fontWeight=if(selected) FontWeight.Bold else FontWeight.Normal,color=if(selected) GreenDark else Color.Gray)
-       } }
+     if(!isInternet) {
+       Text("نوع الخطة",fontWeight=FontWeight.Bold,color=GreenDark)
+      Row(Modifier.fillMaxWidth().background(Page,RoundedCornerShape(14.dp)).padding(4.dp),horizontalArrangement=Arrangement.spacedBy(5.dp)) {
+       listOf("مبلغ متغير (Dynamic Plan)","العروض حسب الرقم (GETMENU)").forEach { option ->
+        val selected=kind==option
+        Surface(
+         modifier=Modifier.weight(1f).clickable { onKind(option) },
+         color=if(selected) Color.White else Color.Transparent,
+         shape=RoundedCornerShape(11.dp),
+         shadowElevation=if(selected) 1.dp else 0.dp
+        ) { Box(Modifier.padding(vertical=11.dp),contentAlignment=Alignment.Center) {
+         Text(option,style=MaterialTheme.typography.labelLarge,fontWeight=if(selected) FontWeight.Bold else FontWeight.Normal,color=if(selected) GreenDark else Color.Gray)
+        } }
+       }
       }
+ 
      }
      Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
       Text(if(isInternet)"رقم الخط / رقم الهاتف (MSSIDN)" else "رقم الهاتف (MSSIDN)",fontWeight=FontWeight.Bold,color=GreenDark)
@@ -507,9 +509,9 @@ private fun serviceLabel(service:String):String = when(service) {
        }
       }
      }
-     if(kind=="مبلغ متغير (Dynamic Plan)") {
+     if(isInternet || kind=="مبلغ متغير (Dynamic Plan)") {
       Column(verticalArrangement=Arrangement.spacedBy(9.dp)) {
-       Text("مبلغ التعبئة",fontWeight=FontWeight.Bold,color=GreenDark)
+       Text(if(isInternet)"قيمة بطاقة الإنترنت (DZD)" else "مبلغ التعبئة (DZD)",fontWeight=FontWeight.Bold,color=GreenDark)
        OutlinedTextField(amount,onAmount,Modifier.fillMaxWidth(),singleLine=true,placeholder={Text("أدخل المبلغ بالدينار الجزائري")},suffix={Text("دج")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),shape=RoundedCornerShape(16.dp))
        quickAmounts.chunked(4).forEach { group ->
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp)) {
