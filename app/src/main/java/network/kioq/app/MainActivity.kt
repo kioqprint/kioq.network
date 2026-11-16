@@ -89,7 +89,7 @@ private suspend fun loadBannerBitmap(context: Context, uri: Uri): androidx.compo
 
 private val demoRecords = listOf(
  RechargeRecord("KQ-1003","محمد بن علي","0770123456","Djezzy","مبلغ متغير (Dynamic Plan)",1000,970,"ناجحة","16/11/2026 · 10:35"),
- RechargeRecord("KQ-1002","أحمد قادري","0550223344","Ooredoo","عرض مفعّل",500,485,"قيد المعالجة","16/11/2026 · 10:20"),
+ RechargeRecord("KQ-1002","أحمد قادري","0550223344","Ooredoo","GETMENU · عرض حسب الرقم",500,485,"قيد المعالجة","16/11/2026 · 10:20"),
  RechargeRecord("KQ-1001","زبون غير محفوظ","0660111222","Mobilis","مبلغ متغير (Dynamic Plan)",100,0,"فاشلة","16/11/2026 · 09:50")
 )
 private class ContactDb(ctx:Context):SQLiteOpenHelper(ctx,"kioq_contacts.db",null,1) {
@@ -424,7 +424,7 @@ private fun serviceLabel(service:String):String = when(service) {
   item {
    Column(Modifier.fillMaxWidth().widthIn(max=540.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(5.dp)) {
     Text(if(isInternet)"تعبئة الإنترنت" else "تعبئة رصيد الهاتف",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.ExtraBold,color=GreenDark)
-    Text(if(isInternet)"اختر الخدمة وأدخل رقم الخط حسب صيغة OneClick" else "اختر الشبكة وأدخل رقم الهاتف",style=MaterialTheme.typography.bodyMedium,color=Color.Gray)
+    Text(if(isInternet)"OneClick: ADSL لخط ثابت يبدأ بـ 0، و4G لرقم يبدأ بـ 213. توافق IDoom Fibre مع ADSL يحتاج تأكيداً." else "اختر المتعامل وأدخل رقم الهاتف",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
    }
   }
   item {
