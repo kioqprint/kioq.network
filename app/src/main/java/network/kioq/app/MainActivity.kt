@@ -355,8 +355,8 @@ private fun networkFor(number:String,selected:String):String {
        modifier=Modifier.fillMaxWidth(),
        singleLine=true,
        placeholder={Text(if(isInternet)"أدخل رقم الاشتراك" else "أدخل رقم الهاتف دون بادئة مسبقة")},
-       leadingIcon={if(number.isNotBlank()) NetworkMark(activeNetwork,true) else Icon(androidx.compose.material.icons.Icons.Default.Phone,contentDescription=null,tint=Green)},
-       trailingIcon={if(number.isNotBlank()) IconButton(onClick={onNumber("")}) { Icon(androidx.compose.material.icons.Icons.Default.Close,contentDescription="مسح الرقم") }},
+       leadingIcon={if(number.isNotBlank()) NetworkMark(activeNetwork,true) else Text("☎",color=Green,fontSize=20.sp)},
+       trailingIcon={if(number.isNotBlank()) IconButton(onClick={onNumber("")}) { Text("×",color=Green,fontSize=24.sp,fontWeight=FontWeight.Bold) }},
        keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Phone),
        shape=RoundedCornerShape(16.dp)
       )
