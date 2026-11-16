@@ -292,29 +292,128 @@ private fun networkFor(number:String,selected:String):String {
 }
 @Composable private fun StatCard(title:String,value:String,modifier:Modifier=Modifier) { Card(modifier) { Column(Modifier.padding(14.dp)) { Text(title,style=MaterialTheme.typography.bodySmall,color=Color.Gray);Text(value,style=MaterialTheme.typography.headlineMedium,color=Green,fontWeight=FontWeight.Bold) } } }
 @Composable private fun RechargePage(page:String,service:String,onService:(String)->Unit,kind:String,onKind:(String)->Unit,number:String,onNumber:(String)->Unit,amount:String,onAmount:(String)->Unit,detected:String,recent:List<Contact>,message:String,onMessage:(String)->Unit,onSave:()->Unit,onConfirm:()->Unit) {
- LazyColumn(Modifier.fillMaxSize().padding(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
-  item { Card { Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
-   Text(if(page=="تعبئة IDoom")"اختر خدمة الإنترنت" else "اختر شبكة الهاتف",fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleMedium)
-   val choices=if(page=="تعبئة IDoom") services.filter { it.startsWith("IDoom") } else services.filter { !it.startsWith("IDoom") }
-   choices.chunked(3).forEach { group->Row(horizontalArrangement=Arrangement.spacedBy(5.dp)) { group.forEach { s->FilterChip(selected=service==s,onClick={onService(s);onNumber("")},label={Text(s)}) } } }
-   Text("نوع التعبئة",fontWeight=FontWeight.Bold)
-   Row(horizontalArrangement=Arrangement.spacedBy(5.dp)) { listOf("شحن عادي","العروض المفعّلة").forEach { k->FilterChip(selected=kind==k,onClick={onKind(k)},label={Text(k)}) } }
-   Text(if(service.startsWith("IDoom"))"رقم اشتراك IDoom" else "رقم الهاتف",fontWeight=FontWeight.Bold)
-   Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(9.dp)) {
-    OutlinedTextField(number,onNumber,Modifier.weight(1f),singleLine=true,label={Text("اكتب الرقم هنا")},placeholder={Text("أدخل الرقم كاملاً")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Phone))
-    NetworkMark(detected,true)
+ val isInternet=page=="تعبئة IDoom"
+ val choices=if(isInternet) services.filter { it.startsWith("IDoom") } else services.filter { !it.startsWith("IDoom") }
+ val activeNetwork=if(number.isNotBlank()) detected else service
+ LazyColumn(
+  modifier=Modifier.fillMaxSize(),
+  contentPadding=PaddingValues(horizontal=16.dp,vertical=18.dp),
+  verticalArrangement=Arrangement.spacedBy(14.dp),
+  horizontalAlignment=Alignment.CenterHorizontally
+ ) {
+  item {
+   Column(Modifier.fillMaxWidth().widthIn(max=540.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(5.dp)) {
+    Text(if(isInternet)"تعبئة الإنترنت" else "تعبئة رصيد الهاتف",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.ExtraBold,color=GreenDark)
+    Text(if(isInternet)"اختر الخدمة وأدخل رقم الاشتراك" else "اختر الشبكة وأدخل رقم الهاتف",style=MaterialTheme.typography.bodyMedium,color=Color.Gray)
    }
-   if(number.isNotBlank()) Text("الشبكة المتعرّف عليها: $detected",style=MaterialTheme.typography.bodySmall,color=Green)
-   if(recent.isNotEmpty()) { Text("أرقام سبق التعامل معها",fontWeight=FontWeight.SemiBold);recent.forEach { c->TextButton(onClick={onNumber(c.number)}) { Text(c.fullName+" · "+c.number) } } }
-   if(kind=="شحن عادي") {
-    Text("مبلغ الشحن بالدينار",fontWeight=FontWeight.Bold)
-    OutlinedTextField(amount,onAmount,Modifier.fillMaxWidth(),singleLine=true,label={Text("أدخل المبلغ")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number))
-    quickAmounts.chunked(4).forEach { group->Row(horizontalArrangement=Arrangement.spacedBy(4.dp)) { group.forEach { a->FilterChip(selected=amount==a,onClick={onAmount(a)},label={Text(a)}) } } }
-   } else Text("العروض المتاحة ستظهر عند تفعيلها ببيانات مؤكدة.")
-   OutlinedButton(onClick=onSave,modifier=Modifier.fillMaxWidth()) { Text("حفظ الرقم كجهة اتصال") }
-   Button(onClick=onConfirm,modifier=Modifier.fillMaxWidth()) { Text("متابعة") }
-   Text(message,style=MaterialTheme.typography.bodySmall,color=Color.Gray)
-  } } }
+  }
+  item {
+   Card(
+    modifier=Modifier.fillMaxWidth().widthIn(max=540.dp),
+    shape=RoundedCornerShape(24.dp),
+    colors=CardDefaults.cardColors(containerColor=Color.White),
+    elevation=CardDefaults.cardElevation(defaultElevation=2.dp)
+   ) {
+    Column(Modifier.fillMaxWidth().padding(18.dp),verticalArrangement=Arrangement.spacedBy(15.dp)) {
+     Text(if(isInternet)"نوع الاشتراك" else "اختر شبكة الهاتف",fontWeight=FontWeight.Bold,color=GreenDark)
+     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+      choices.forEach { option ->
+       val selected=service==option
+       Card(
+        modifier=Modifier.weight(1f).clickable { onService(option);onNumber("") },
+        shape=RoundedCornerShape(15.dp),
+        border=if(selected) androidx.compose.foundation.BorderStroke(1.5.dp,Green) else null,
+        colors=CardDefaults.cardColors(containerColor=if(selected) GreenSoft else Page)
+       ) {
+        Column(Modifier.fillMaxWidth().padding(vertical=13.dp,horizontal=4.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(6.dp)) {
+         NetworkMark(option,true)
+         Text(option,fontWeight=if(selected) FontWeight.Bold else FontWeight.Medium,style=MaterialTheme.typography.labelMedium,color=if(selected) GreenDark else Color.DarkGray)
+        }
+       }
+      }
+     }
+     HorizontalDivider(color=Page)
+     Text("نوع العملية",fontWeight=FontWeight.Bold,color=GreenDark)
+     Row(Modifier.fillMaxWidth().background(Page,RoundedCornerShape(14.dp)).padding(4.dp),horizontalArrangement=Arrangement.spacedBy(5.dp)) {
+      listOf("شحن عادي","العروض المفعّلة").forEach { option ->
+       val selected=kind==option
+       Surface(
+        modifier=Modifier.weight(1f).clickable { onKind(option) },
+        color=if(selected) Color.White else Color.Transparent,
+        shape=RoundedCornerShape(11.dp),
+        shadowElevation=if(selected) 1.dp else 0.dp
+       ) { Box(Modifier.padding(vertical=11.dp),contentAlignment=Alignment.Center) {
+        Text(option,style=MaterialTheme.typography.labelLarge,fontWeight=if(selected) FontWeight.Bold else FontWeight.Normal,color=if(selected) GreenDark else Color.Gray)
+       } }
+      }
+     }
+     Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
+      Text(if(isInternet)"رقم اشتراك IDoom" else "رقم الهاتف",fontWeight=FontWeight.Bold,color=GreenDark)
+      OutlinedTextField(
+       value=number,
+       onValueChange=onNumber,
+       modifier=Modifier.fillMaxWidth(),
+       singleLine=true,
+       placeholder={Text(if(isInternet)"أدخل رقم الاشتراك" else "أدخل رقم الهاتف دون بادئة مسبقة")},
+       leadingIcon={if(number.isNotBlank()) NetworkMark(activeNetwork,true) else Icon(androidx.compose.material.icons.Icons.Default.Phone,contentDescription=null,tint=Green)},
+       trailingIcon={if(number.isNotBlank()) IconButton(onClick={onNumber("")}) { Icon(androidx.compose.material.icons.Icons.Default.Close,contentDescription="مسح الرقم") }},
+       keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Phone),
+       shape=RoundedCornerShape(16.dp)
+      )
+      if(number.isNotBlank()) {
+       Row(Modifier.fillMaxWidth().background(GreenSoft,RoundedCornerShape(12.dp)).padding(11.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(9.dp)) {
+        NetworkMark(activeNetwork,true)
+        Column(Modifier.weight(1f)) {
+         Text("تم التعرف على الشبكة",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
+         Text(activeNetwork,fontWeight=FontWeight.Bold,color=GreenDark)
+        }
+        Text("✓",color=Green,fontWeight=FontWeight.Black)
+       }
+      } else {
+       Text("سيظهر شعار الشبكة تلقائياً بعد كتابة الرقم",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+      }
+     }
+     if(recent.isNotEmpty()) {
+      Column(verticalArrangement=Arrangement.spacedBy(5.dp)) {
+       Text("الأرقام الأخيرة",fontWeight=FontWeight.Bold,color=GreenDark)
+       recent.take(3).forEach { c ->
+        Surface(Modifier.fillMaxWidth().clickable { onNumber(c.number);onService(c.service) },color=Page,shape=RoundedCornerShape(12.dp)) {
+         Row(Modifier.padding(10.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(9.dp)) {
+          NetworkMark(c.service)
+          Column(Modifier.weight(1f)) { Text(c.fullName,fontWeight=FontWeight.SemiBold);Text(c.number,style=MaterialTheme.typography.bodySmall,color=Color.Gray) }
+          Text("اختيار",color=Green,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.labelMedium)
+         }
+        }
+       }
+      }
+     }
+     if(kind=="شحن عادي") {
+      Column(verticalArrangement=Arrangement.spacedBy(9.dp)) {
+       Text("مبلغ التعبئة",fontWeight=FontWeight.Bold,color=GreenDark)
+       OutlinedTextField(amount,onAmount,Modifier.fillMaxWidth(),singleLine=true,placeholder={Text("أدخل المبلغ بالدينار الجزائري")},suffix={Text("دج")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),shape=RoundedCornerShape(16.dp))
+       quickAmounts.chunked(4).forEach { group ->
+        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp)) {
+         group.forEach { value ->
+          FilterChip(selected=amount==value,onClick={onAmount(value)},label={Text(value)},modifier=Modifier.weight(1f))
+         }
+         repeat(4-group.size) { Spacer(Modifier.weight(1f)) }
+        }
+       }
+      }
+     } else {
+      Text("العروض المتاحة ستظهر عند تفعيلها ببيانات مؤكدة.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+     }
+     OutlinedButton(onClick=onSave,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(14.dp)) { Text("حفظ الرقم كجهة اتصال") }
+     Button(
+      onClick=onConfirm,
+      modifier=Modifier.fillMaxWidth().height(52.dp),
+      shape=RoundedCornerShape(15.dp),
+      colors=ButtonDefaults.buttonColors(containerColor=Green)
+     ) { Text("متابعة",fontWeight=FontWeight.Bold) }
+     if(message.isNotBlank()) Text(message,style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+    }
+   }
+  }
  }
 }
 @Composable private fun HistoryPage(query:String,onQuery:(String)->Unit,status:String,onStatus:(String)->Unit,records:List<RechargeRecord>,expanded:String?,onExpanded:(String?)->Unit) {
