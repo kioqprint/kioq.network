@@ -628,14 +628,3 @@ private fun networkFor(number:String,selected:String):String {
   }
  }
 }
-@Composable private fun InfoPage(title:String,description:String,note:String) {
- LazyColumn(Modifier.fillMaxSize().padding(16.dp),verticalArrangement=Arrangement.spacedBy(13.dp)) {
-  item { Card(shape=RoundedCornerShape(22.dp)) { Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-   Text(title,style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=GreenDark)
-   Text(description,style=MaterialTheme.typography.bodyLarge)
-   HorizontalDivider()
-   Text(note,style=MaterialTheme.typography.bodyMedium,color=Color(0xFF52645A))
-  } } }
-  item { Card(colors=CardDefaults.cardColors(containerColor=GreenSoft)) { Text("سيتم تفعيل البيانات والعمليات الفعلية بعد تجهيز الخادم وربط الحسابات والصلاحيات.",Modifier.padding(15.dp),style=MaterialTheme.typography.bodySmall,color=GreenDark) } }
- }
-}
