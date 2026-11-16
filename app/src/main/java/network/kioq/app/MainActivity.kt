@@ -3,18 +3,27 @@ package network.kioq.app
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
+import android.graphics.BitmapFactory
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.animation.Crossfade
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -29,6 +38,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 
 private val Green = Color(0xFF075B3D)
 private val GreenDark = Color(0xFF03452F)
@@ -40,6 +51,16 @@ private val quickAmounts = listOf("50", "100", "200", "500", "1000", "1500", "20
 private val menuItems = listOf("الرئيسية", "تعبئة الهاتف", "تعبئة IDoom", "سجل التعبئات", "الزبائن والتجار", "الديون والمدفوعات", "الأرباح والمداخيل", "الصندوق والسحوبات", "الإشعارات", "المحادثات", "التقارير والإحصائيات", "الإعدادات")
 private data class Contact(val id:Long=0,val first:String,val last:String,val number:String,val service:String) { val fullName:String get()="$first $last" }
 private data class RechargeRecord(val id:String,val name:String,val number:String,val service:String,val kind:String,val amount:Int,val deducted:Int,val status:String,val date:String)
+
+private data class HelpNumber(val label:String,val number:String)
+private val helpNumbers = mapOf(
+ "Djezzy" to listOf(HelpNumber("خدمة الزبائن","777"),HelpNumber("خدمة الزبائن من شبكة أخرى","0770857777"),HelpNumber("دعم الموزعين ونقاط البيع","401"),HelpNumber("دعم الموزعين من شبكة أخرى","0770850401"),HelpNumber("القائمة العامة","700")),
+ "Ooredoo" to listOf(HelpNumber("خدمة الزبائن","333"),HelpNumber("خدمة الزبائن من شبكة أخرى","0550000333"),HelpNumber("خدمة زبائن المؤسسات","330"),HelpNumber("خدمة المؤسسات من شبكة أخرى","0550000330")),
+ "Mobilis" to listOf(HelpNumber("خدمة زبائن الدفع الآجل","666"),HelpNumber("خدمة زبائن الدفع المسبق","888"),HelpNumber("الدفع الآجل من شبكة أخرى","0660600666"),HelpNumber("مسبق الدفع من شبكة أخرى","0660600888")),
+ "IDoom" to listOf(HelpNumber("خدمة الزبائن والدعم","12"))
+)
+private fun bannerPrefs(context:Context)=context.getSharedPreferences("kioq_banners",Context.MODE_PRIVATE)
+
 private val demoRecords = listOf(
  RechargeRecord("KQ-1003","محمد بن علي","0770123456","Djezzy","شحن عادي",1000,970,"ناجحة","16/11/2026 · 10:35"),
  RechargeRecord("KQ-1002","أحمد قادري","0550223344","Ooredoo","عرض مفعّل",500,485,"قيد المعالجة","16/11/2026 · 10:20"),
@@ -112,7 +133,27 @@ private fun networkFor(number:String,selected:String):String {
  var expanded by remember { mutableStateOf<String?>(null) }
  var dialog by remember { mutableStateOf(false) }
  var editing by remember { mutableStateOf<Contact?>(null) }
- var message by remember { mutableStateOf("هذه واجهة تجريبية؛ لم يتم إرسال أي طلب أو خصم رصيد.") }
+ var message by remember { mutableStateOf("") }
+ val prefs=remember { bannerPrefs(context) }
+ var bannerText by remember { mutableStateOf(prefs.getString("text","مرحباً بكم في KIOQ.network · خدمات التعبئة والإنترنت في مكان واحد") ?: "") }
+ var textSize by remember { mutableFloatStateOf(prefs.getFloat("textSize",16f)) }
+ var textSpeed by remember { mutableFloatStateOf(prefs.getFloat("textSpeed",48f)) }
+ var imageHeight by remember { mutableFloatStateOf(prefs.getFloat("imageHeight",150f)) }
+ var imageSpeed by remember { mutableFloatStateOf(prefs.getFloat("imageSpeed",4f)) }
+ var imageUris by remember { mutableStateOf(prefs.getString("images","")?.split("|")?.filter { it.isNotBlank() } ?: emptyList()) }
+ var imageIndex by remember { mutableIntStateOf(0) }
+ var helpNetwork by remember { mutableStateOf<String?>(null) }
+ val imagePicker=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+  if(uri!=null && imageUris.size<5) {
+   runCatching { context.contentResolver.takePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+   imageUris=imageUris+uri.toString()
+   prefs.edit().putString("images",imageUris.joinToString("|")).apply()
+  }
+ }
+ LaunchedEffect(imageUris,imageSpeed) {
+  if(imageUris.size>1) while(true) { delay((imageSpeed*1000).toLong().coerceAtLeast(1000L)); imageIndex=(imageIndex+1)%imageUris.size }
+  else imageIndex=0
+ }
  val detected=networkFor(number,service)
  val drawerState=rememberDrawerState(DrawerValue.Closed)
  LaunchedEffect(drawer) { if(drawer) drawerState.open() else drawerState.close() }
@@ -153,8 +194,19 @@ private fun networkFor(number:String,selected:String):String {
      Column(Modifier.weight(1f)) { Text("KIOQ.network",fontWeight=FontWeight.ExtraBold,color=GreenDark); Text(page,style=MaterialTheme.typography.labelSmall,color=Color.Gray) }
      BrandMark(38)
     }
+    if(bannerText.isNotBlank()) {
+     Box(Modifier.fillMaxWidth().padding(horizontal=12.dp, vertical=6.dp).background(GreenDark,RoundedCornerShape(12.dp)).padding(horizontal=12.dp,vertical=9.dp)) {
+      Text(bannerText,Modifier.fillMaxWidth().basicMarquee(iterations=Int.MAX_VALUE,velocity=textSpeed.dp),color=Color.White,fontSize=textSize.sp,fontWeight=FontWeight.SemiBold,maxLines=1)
+     }
+    }
+    if(imageUris.isNotEmpty()) {
+     Crossfade(targetState=imageUris[imageIndex.coerceIn(0,imageUris.lastIndex)],label="banner-image") { uri ->
+      val bitmap=remember(uri) { runCatching { context.contentResolver.openInputStream(Uri.parse(uri))?.use { BitmapFactory.decodeStream(it)?.asImageBitmap() } }.getOrNull() }
+      if(bitmap!=null) Image(bitmap=bitmap,contentDescription="بانر KIOQ.network",modifier=Modifier.fillMaxWidth().padding(horizontal=12.dp).height(imageHeight.dp),contentScale=ContentScale.Crop)
+     }
+    }
     when(page) {
-     "الرئيسية" -> Dashboard(onNavigate={page=it},contacts=contacts.size)
+     "الرئيسية" -> Dashboard(onNavigate={page=it},contacts=contacts.size,onHelp={helpNetwork=it})
      "تعبئة الهاتف","تعبئة IDoom" -> RechargePage(page,service,{service=it},kind,{kind=it},number,{number=it.filter(Char::isDigit)},amount,{amount=it.filter(Char::isDigit)},detected,recent,message,{message=it},onSave={editing=null;dialog=true},onConfirm={message="طلب تجريبي فقط: لم يتم إرسال طلب أو خصم رصيد."})
      "سجل التعبئات" -> HistoryPage(historyQuery,{historyQuery=it},statusFilter,{statusFilter=it},records,expanded,{expanded=it})
      "الزبائن والتجار" -> ContactsPage(contactQuery,{contactQuery=it},contactList,onAdd={editing=null;dialog=true},onUse={c->service=c.service;number=c.number;page=if(c.service.startsWith("IDoom")) "تعبئة IDoom" else "تعبئة الهاتف"},onEdit={editing=it;dialog=true},onDelete={db.delete(it.id);contacts=db.all()},onCall={context.startActivity(Intent(Intent.ACTION_DIAL,Uri.parse("tel:"+it)))})
@@ -164,10 +216,23 @@ private fun networkFor(number:String,selected:String):String {
      "الإشعارات" -> InfoPage("الإشعارات","تنبيهات الطلبات وحالات التعبئة والمدفوعات.","لا توجد إشعارات فعلية في النسخة التجريبية.")
      "المحادثات" -> InfoPage("المحادثات","مساحة تواصل بين المالك والتجار.","المحادثات تحتاج إلى الخادم المركزي لتعمل.")
      "التقارير والإحصائيات" -> InfoPage("التقارير والإحصائيات","ملخص العمليات والمبيعات والديون والأرباح.","ستظهر البيانات الحقيقية بعد ربط الخادم.")
-     else -> InfoPage("الإعدادات","إعدادات الحساب والأمان والإشعارات والنسخ الاحتياطي.","هذه الخيارات واجهة أولية، ولم يتم تفعيل الحسابات أو المزامنة بعد.")
+     else -> BannerSettingsPage(bannerText,{bannerText=it;prefs.edit().putString("text",it).apply()},textSize,{textSize=it;prefs.edit().putFloat("textSize",it).apply()},textSpeed,{textSpeed=it;prefs.edit().putFloat("textSpeed",it).apply()},imageHeight,{imageHeight=it;prefs.edit().putFloat("imageHeight",it).apply()},imageSpeed,{imageSpeed=it;prefs.edit().putFloat("imageSpeed",it).apply()},imageUris,onAddImage={if(imageUris.size<5) imagePicker.launch(arrayOf("image/*"))},onDeleteImage={uri->imageUris=imageUris.filterNot{it==uri};prefs.edit().putString("images",imageUris.joinToString("|")).apply()})
     }
    }
   }
+ }
+ if(helpNetwork!=null) {
+  val network=helpNetwork!!
+  AlertDialog(onDismissRequest={helpNetwork=null},title={Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)){NetworkMark(network,true);Text("أرقام $network الرسمية")}},
+   text={Column(verticalArrangement=Arrangement.spacedBy(7.dp)) {
+    helpNumbers[network].orEmpty().forEach { item ->
+     OutlinedButton(onClick={context.startActivity(Intent(Intent.ACTION_DIAL,Uri.parse("tel:"+Uri.encode(item.number))))},modifier=Modifier.fillMaxWidth()) {
+      Column(Modifier.fillMaxWidth()) { Text(item.label,style=MaterialTheme.typography.labelMedium);Text(item.number,fontWeight=FontWeight.Bold,color=GreenDark) }
+     }
+    }
+   }},
+   confirmButton={TextButton(onClick={helpNetwork=null}){Text("إغلاق")}}
+  )
  }
  if(dialog) {
   var first by remember(editing?.id) { mutableStateOf(editing?.first.orEmpty()) }
@@ -187,7 +252,7 @@ private fun networkFor(number:String,selected:String):String {
   )
  }
 }
-@Composable private fun Dashboard(onNavigate:(String)->Unit,contacts:Int) {
+@Composable private fun Dashboard(onNavigate:(String)->Unit,contacts:Int,onHelp:(String)->Unit) {
  LazyColumn(Modifier.fillMaxSize().padding(16.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
   item {
    Card(colors=CardDefaults.cardColors(containerColor=GreenDark),shape=RoundedCornerShape(26.dp)) {
@@ -196,26 +261,33 @@ private fun networkFor(number:String,selected:String):String {
      HorizontalDivider(color=Color(0x5579A992))
      Text("أهلاً بك",color=Color(0xFFB9D8C7))
      Text("كل خدماتك في مكان واحد",color=Color.White,style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)
-     Text("حلول تعبئة الهاتف والإنترنت في الجزائر",color=Color(0xFFD6E9DE),style=MaterialTheme.typography.bodySmall)
     }
    }
   }
+  item { Text("النظرة السريعة",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold) }
+  item { Row(horizontalArrangement=Arrangement.spacedBy(9.dp)) { StatCard("الرصيد الرئيسي","— دج",Modifier.weight(1f));StatCard("الدين","— دج",Modifier.weight(1f)) } }
+  item { Card(shape=RoundedCornerShape(18.dp)) { Column(Modifier.fillMaxWidth().padding(15.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
+   Text("العمليات المنجزة اليوم",style=MaterialTheme.typography.bodyMedium,color=Color.Gray)
+   Text("0 عملية",style=MaterialTheme.typography.headlineMedium,color=Green,fontWeight=FontWeight.Bold)
+   HorizontalDivider()
+   Text("صافي الربح اليوم",style=MaterialTheme.typography.bodyMedium,color=Color.Gray)
+   Text("— دج",style=MaterialTheme.typography.headlineSmall,color=Green,fontWeight=FontWeight.Bold)
+  } } }
   item { Text("الخدمات",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold) }
-  item {
-   Column(verticalArrangement=Arrangement.spacedBy(9.dp)) {
-    services.chunked(2).forEach { group->Row(horizontalArrangement=Arrangement.spacedBy(9.dp)) {
-     group.forEach { s->Card(Modifier.weight(1f).clickable { onNavigate(if(s.startsWith("IDoom"))"تعبئة IDoom" else "تعبئة الهاتف") },shape=RoundedCornerShape(18.dp)) {
-      Row(Modifier.fillMaxWidth().padding(13.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(9.dp)) { NetworkMark(s);Text(s,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.bodyMedium) }
-     } }
-     if(group.size==1) Spacer(Modifier.weight(1f))
+  item { Column(verticalArrangement=Arrangement.spacedBy(9.dp)) {
+   listOf("Djezzy","Ooredoo","Mobilis","IDoom").chunked(2).forEach { group->Row(horizontalArrangement=Arrangement.spacedBy(9.dp)) {
+    group.forEach { network->Card(Modifier.weight(1f).clickable { onHelp(network) },shape=RoundedCornerShape(18.dp)) {
+     Row(Modifier.fillMaxWidth().padding(13.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(9.dp)) { NetworkMark(network,true);Column { Text(network,fontWeight=FontWeight.Bold);Text("أرقام الخدمة والدعم",style=MaterialTheme.typography.labelSmall,color=Color.Gray) } }
     } }
-   }
-  }
-  item { Text("نظرة سريعة",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold) }
-  item { Row(horizontalArrangement=Arrangement.spacedBy(9.dp)) { StatCard("جهات الاتصال",contacts.toString(),Modifier.weight(1f));StatCard("عمليات تجريبية",demoRecords.size.toString(),Modifier.weight(1f)) } }
-  item { Text("الوصول السريع",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold) }
-  item { Column(verticalArrangement=Arrangement.spacedBy(7.dp)) { listOf("تعبئة الهاتف","تعبئة IDoom","سجل التعبئات","الزبائن والتجار").forEach { label->Card(Modifier.fillMaxWidth().clickable { onNavigate(label) }) { Row(Modifier.padding(15.dp),verticalAlignment=Alignment.CenterVertically) { Text(label,Modifier.weight(1f),fontWeight=FontWeight.SemiBold);Text("‹",color=Green,style=MaterialTheme.typography.titleLarge) } } } } }
-  item { Text("النسخة الحالية تجريبية؛ لا توجد تعبئات فعلية أو أرصدة متصلة بخادم بعد.",style=MaterialTheme.typography.bodySmall,color=Color.Gray) }
+   } }
+  } }
+  item { Text("خدمات التعبئة",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold) }
+  item { Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
+   services.chunked(2).forEach { group->Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+    group.forEach { item->Card(Modifier.weight(1f).clickable { onNavigate(if(item.startsWith("IDoom"))"تعبئة IDoom" else "تعبئة الهاتف") }) { Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) { NetworkMark(item);Text(item,fontWeight=FontWeight.SemiBold) } } }
+    if(group.size==1) Spacer(Modifier.weight(1f))
+   } }
+  } }
  }
 }
 @Composable private fun StatCard(title:String,value:String,modifier:Modifier=Modifier) { Card(modifier) { Column(Modifier.padding(14.dp)) { Text(title,style=MaterialTheme.typography.bodySmall,color=Color.Gray);Text(value,style=MaterialTheme.typography.headlineMedium,color=Green,fontWeight=FontWeight.Bold) } } }
@@ -270,6 +342,35 @@ private fun networkFor(number:String,selected:String):String {
   } } }
  }
 }
+@Composable private fun BannerSettingsPage(
+ text:String,onText:(String)->Unit,textSize:Float,onTextSize:(Float)->Unit,textSpeed:Float,onTextSpeed:(Float)->Unit,
+ imageHeight:Float,onImageHeight:(Float)->Unit,imageSpeed:Float,onImageSpeed:(Float)->Unit,
+ images:List<String>,onAddImage:()->Unit,onDeleteImage:(String)->Unit
+) {
+ LazyColumn(Modifier.fillMaxSize().padding(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
+  item { Text("إدارة البانرات",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=GreenDark);Text("تظهر هذه البانرات أعلى محتوى جميع الصفحات.",style=MaterialTheme.typography.bodySmall,color=Color.Gray) }
+  item { Card { Column(Modifier.padding(15.dp),verticalArrangement=Arrangement.spacedBy(9.dp)) {
+   Text("البانر الكتابي",fontWeight=FontWeight.Bold)
+   OutlinedTextField(text,onText,Modifier.fillMaxWidth(),label={Text("النص المعروض")},minLines=2)
+   Text("حجم الخط: ${textSize.toInt()} px")
+   Slider(value=textSize,onValueChange=onTextSize,valueRange=12f..28f)
+   Text("سرعة حركة النص")
+   Slider(value=textSpeed,onValueChange=onTextSpeed,valueRange=20f..100f)
+  } } }
+  item { Card { Column(Modifier.padding(15.dp),verticalArrangement=Arrangement.spacedBy(9.dp)) {
+   Text("بانر الصور",fontWeight=FontWeight.Bold)
+   Text("الصور المضافة: ${images.size} / 5",style=MaterialTheme.typography.bodySmall)
+   images.forEachIndexed { index,uri -> Row(verticalAlignment=Alignment.CenterVertically) { Text("الصورة ${index+1}",Modifier.weight(1f));TextButton(onClick={onDeleteImage(uri)}) { Text("حذف",color=Red) } } }
+   OutlinedButton(onClick=onAddImage,enabled=images.size<5,modifier=Modifier.fillMaxWidth()) { Text(if(images.size<5)"إضافة صورة" else "اكتمل الحد الأقصى للصور") }
+   Text("ارتفاع الصور: ${imageHeight.toInt()} dp")
+   Slider(value=imageHeight,onValueChange=onImageHeight,valueRange=90f..260f)
+   Text("سرعة الانتقال بين الصور: ${imageSpeed.toInt()} ثوانٍ")
+   Slider(value=imageSpeed,onValueChange=onImageSpeed,valueRange=2f..12f,steps=9)
+  } } }
+  item { Text("الإعدادات محفوظة على هذا الجهاز حالياً. مزامنتها بين حسابات التجار تتطلب ربط الخادم.",style=MaterialTheme.typography.bodySmall,color=Color.Gray) }
+ }
+}
+
 @Composable private fun InfoPage(title:String,description:String,note:String) {
  LazyColumn(Modifier.fillMaxSize().padding(16.dp),verticalArrangement=Arrangement.spacedBy(13.dp)) {
   item { Card(shape=RoundedCornerShape(22.dp)) { Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
