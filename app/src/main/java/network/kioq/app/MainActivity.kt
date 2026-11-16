@@ -15,7 +15,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,7 +46,9 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 private val Green = Color(0xFF087A50)
 private val GreenDark = Color(0xFF06452F)
@@ -68,6 +70,18 @@ private val helpNumbers = mapOf(
  "IDoom" to listOf(HelpNumber("خدمة الزبائن والدعم","12"))
 )
 private fun bannerPrefs(context:Context)=context.getSharedPreferences("kioq_banners",Context.MODE_PRIVATE)
+
+private suspend fun loadBannerBitmap(context: Context, uri: Uri): androidx.compose.ui.graphics.ImageBitmap? =
+ withContext(Dispatchers.IO) {
+  runCatching {
+   val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+   context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+   var sample = 1
+   while (bounds.outWidth / sample > 1280 || bounds.outHeight / sample > 720) sample *= 2
+   val options = BitmapFactory.Options().apply { inSampleSize = sample.coerceAtLeast(1) }
+   context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, options)?.asImageBitmap() }
+  }.getOrNull()
+}
 
 private val demoRecords = listOf(
  RechargeRecord("KQ-1003","محمد بن علي","0770123456","Djezzy","شحن عادي",1000,970,"ناجحة","16/11/2026 · 10:35"),
@@ -222,13 +236,17 @@ private fun networkFor(number:String,selected:String):String {
     }
     if(bannerText.isNotBlank()) {
      Box(Modifier.fillMaxWidth().padding(horizontal=12.dp, vertical=6.dp).background(GreenDark,RoundedCornerShape(12.dp)).padding(horizontal=12.dp,vertical=9.dp)) {
-      Text(bannerText,Modifier.fillMaxWidth().basicMarquee(iterations=Int.MAX_VALUE,velocity=textSpeed.dp),color=Color.White,fontSize=textSize.sp,fontWeight=FontWeight.SemiBold,maxLines=1)
+      Text(bannerText,Modifier.fillMaxWidth(),color=Color.White,fontSize=textSize.sp,fontWeight=FontWeight.SemiBold,maxLines=1)
      }
     }
     if(imageUris.isNotEmpty()) {
-     Crossfade(targetState=imageUris[imageIndex.coerceIn(0,imageUris.lastIndex)],label="banner-image") { uri ->
-      val bitmap=remember(uri) { runCatching { context.contentResolver.openInputStream(Uri.parse(uri))?.use { BitmapFactory.decodeStream(it)?.asImageBitmap() } }.getOrNull() }
-      if(bitmap!=null) Image(bitmap=bitmap,contentDescription="بانر KIOQ.network",modifier=Modifier.fillMaxWidth().padding(horizontal=12.dp).height(imageHeight.dp),contentScale=ContentScale.Crop)
+     val currentBannerUri = imageUris[imageIndex.coerceIn(0,imageUris.lastIndex)]
+     Crossfade(targetState=currentBannerUri,label="banner-image") { uri ->
+      val bitmap by produceState<androidx.compose.ui.graphics.ImageBitmap?>(initialValue=null, key1=uri) {
+       value = loadBannerBitmap(context, Uri.parse(uri))
+      }
+      if(bitmap!=null) Image(bitmap=bitmap!!,contentDescription="بانر KIOQ.network",modifier=Modifier.fillMaxWidth().padding(horizontal=12.dp).height(imageHeight.dp),contentScale=ContentScale.Crop)
+      else Box(Modifier.fillMaxWidth().padding(horizontal=12.dp).height(imageHeight.dp).background(GreenSoft,RoundedCornerShape(14.dp)))
      }
     }
     Box(Modifier.fillMaxWidth(),contentAlignment=Alignment.TopCenter) {
@@ -284,11 +302,17 @@ private fun networkFor(number:String,selected:String):String {
  }
 }
 @Composable private fun Dashboard(onNavigate:(String)->Unit,contacts:Int,onHelp:(String)->Unit) {
- LazyColumn(Modifier.fillMaxSize().padding(16.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
+ LazyColumn(Modifier.fillMaxSize().padding(horizontal=16.dp,vertical=18.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
   item {
-   Card(colors=CardDefaults.cardColors(containerColor=Color.Transparent),shape=RoundedCornerShape(26.dp),modifier=Modifier.fillMaxWidth()) {
-    Column(Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(GreenDark,Green,GreenBright)),RoundedCornerShape(26.dp)).padding(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
-     Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(13.dp)) { BrandMark(58);Column { Text("KIOQ.network",color=Color.White,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Black);Text("منصة خدمات الهاتف والإنترنت",color=Color(0xFFD6E9DE)) } }
+   Card(colors=CardDefaults.cardColors(containerColor=Color.Transparent),shape=RoundedCornerShape(28.dp),modifier=Modifier.fillMaxWidth()) {
+    Column(Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(Color(0xFF043D2A),Green,GreenBright)),RoundedCornerShape(28.dp)).padding(21.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
+     Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(13.dp)) {
+      BrandMark(58)
+      Column {
+       Text("KIOQ.network",color=Color.White,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Black)
+       Text("منصة خدمات الهاتف والإنترنت",color=Color(0xFFD6E9DE),style=MaterialTheme.typography.bodySmall)
+      }
+     }
      HorizontalDivider(color=Color(0x5579A992))
      Text("أهلاً بك",color=Color(0xFFB9D8C7))
      Text("كل خدماتك في مكان واحد",color=Color.White,style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)
@@ -297,28 +321,77 @@ private fun networkFor(number:String,selected:String):String {
   }
   item { Text("النظرة السريعة",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.ExtraBold,color=GreenDark) }
   item { Row(horizontalArrangement=Arrangement.spacedBy(9.dp)) { StatCard("الرصيد الرئيسي","— دج",Modifier.weight(1f));StatCard("الدين","— دج",Modifier.weight(1f)) } }
-  item { Card(shape=RoundedCornerShape(18.dp)) { Column(Modifier.fillMaxWidth().padding(15.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
+  item { Card(shape=RoundedCornerShape(20.dp)) { Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
    Text("العمليات المنجزة اليوم",style=MaterialTheme.typography.bodyMedium,color=Color.Gray)
    Text("0 عملية",style=MaterialTheme.typography.headlineMedium,color=Green,fontWeight=FontWeight.Bold)
-   HorizontalDivider()
+   HorizontalDivider(color=Page)
    Text("صافي الربح اليوم",style=MaterialTheme.typography.bodyMedium,color=Color.Gray)
    Text("— دج",style=MaterialTheme.typography.headlineSmall,color=Green,fontWeight=FontWeight.Bold)
   } } }
-  item { Text("الخدمات",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.ExtraBold,color=GreenDark) }
-  item { Column(verticalArrangement=Arrangement.spacedBy(9.dp)) {
-   listOf("Djezzy","Ooredoo","Mobilis","IDoom").chunked(2).forEach { group->Row(horizontalArrangement=Arrangement.spacedBy(9.dp)) {
-    group.forEach { network->Card(Modifier.weight(1f).clickable { onHelp(network) },shape=RoundedCornerShape(18.dp)) {
-     Row(Modifier.fillMaxWidth().padding(13.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(9.dp)) { NetworkMark(network,true);Column { Text(network,fontWeight=FontWeight.Bold);Text("أرقام الخدمة والدعم",style=MaterialTheme.typography.labelSmall,color=Color.Gray) } }
-    } }
-   } }
-  } }
-  item { Text("خدمات التعبئة",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.ExtraBold,color=GreenDark) }
-  item { Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
-   services.chunked(2).forEach { group->Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-    group.forEach { item->Card(Modifier.weight(1f).clickable { onNavigate(if(item.startsWith("IDoom"))"تعبئة IDoom" else "تعبئة الهاتف") }) { Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) { NetworkMark(item);Text(item,fontWeight=FontWeight.SemiBold) } } }
-    if(group.size==1) Spacer(Modifier.weight(1f))
-   } }
-  } }
+  item {
+   Column(Modifier.fillMaxWidth().background(Color.White,RoundedCornerShape(24.dp)).padding(15.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
+    Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(9.dp)) {
+     Surface(color=Color(0xFFFFF0F0),shape=RoundedCornerShape(12.dp),modifier=Modifier.size(38.dp)){Box(contentAlignment=Alignment.Center){Text("☎",color=Red,fontSize=20.sp,fontWeight=FontWeight.Bold)}}
+     Column {
+      Text("خدمات الشركات",fontWeight=FontWeight.ExtraBold,color=GreenDark,style=MaterialTheme.typography.titleLarge)
+      Text("معلومات الاتصال والدعم لكل شركة",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
+     }
+    }
+    listOf("Djezzy","Ooredoo","Mobilis","IDoom").forEachIndexed { index, network ->
+     val accent=when(network) { "Djezzy"->Color(0xFFD92732); "Ooredoo"->Color(0xFFE51D2A); "Mobilis"->Color(0xFF0876B9); else->Green }
+     Surface(modifier=Modifier.fillMaxWidth().clickable { onHelp(network) },color=Color(0xFFF8FAF8),shape=RoundedCornerShape(16.dp),border=androidx.compose.foundation.BorderStroke(1.dp,accent.copy(alpha=.18f))) {
+      Row(Modifier.padding(horizontal=13.dp,vertical=12.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+       Box(Modifier.size(42.dp).background(accent.copy(alpha=.10f),RoundedCornerShape(13.dp)),contentAlignment=Alignment.Center) {
+        Text(when(network) { "Djezzy"->"D"; "Ooredoo"->"O"; "Mobilis"->"M"; else->"i" },fontSize=21.sp,fontWeight=FontWeight.Black,color=accent)
+       }
+       Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(2.dp)) {
+        Text(network,fontWeight=FontWeight.Bold,color=GreenDark)
+        Text("أرقام الخدمة والدعم",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
+       }
+       Text("الدعم  ←",style=MaterialTheme.typography.labelMedium,fontWeight=FontWeight.Bold,color=accent)
+      }
+     }
+    }
+   }
+  }
+  item {
+   Column(Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(GreenDark,Green)),RoundedCornerShape(25.dp)).padding(15.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
+    Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(9.dp)) {
+     Surface(color=Color(0x33FFFFFF),shape=RoundedCornerShape(12.dp),modifier=Modifier.size(38.dp)){Box(contentAlignment=Alignment.Center){Text("↗",color=Color.White,fontSize=22.sp,fontWeight=FontWeight.Bold)}}
+     Column {
+      Text("خدمات التعبئة",fontWeight=FontWeight.ExtraBold,color=Color.White,style=MaterialTheme.typography.titleLarge)
+      Text("اختر نوع التعبئة للمتابعة",style=MaterialTheme.typography.labelSmall,color=Color(0xFFD6E9DE))
+     }
+    }
+    Text("تعبئة الهاتف",fontWeight=FontWeight.Bold,color=Color.White)
+    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+     listOf("Djezzy","Ooredoo","Mobilis").forEach { network ->
+      Surface(modifier=Modifier.weight(1f).clickable { onNavigate("تعبئة الهاتف") },color=Color.White,shape=RoundedCornerShape(16.dp)) {
+       Column(Modifier.padding(vertical=14.dp,horizontal=5.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(5.dp)) {
+        Box(Modifier.size(34.dp).background(when(network) { "Djezzy"->Color(0xFFFFE9EA); "Ooredoo"->Color(0xFFFFE9EA); else->Color(0xFFE6F3FB) },CircleShape),contentAlignment=Alignment.Center) {
+         Text(when(network) { "Djezzy"->"D"; "Ooredoo"->"O"; else->"M" },fontWeight=FontWeight.Black,color=when(network) { "Djezzy"->Red; "Ooredoo"->Red; else->Color(0xFF0876B9) },fontSize=18.sp)
+        }
+        Text(network,fontWeight=FontWeight.Bold,color=GreenDark,style=MaterialTheme.typography.labelSmall,maxLines=1)
+       }
+      }
+     }
+    }
+    Text("تعبئة الإنترنت",fontWeight=FontWeight.Bold,color=Color.White)
+    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+     listOf("IDoom Fibre","IDoom 4G").forEach { network ->
+      Surface(modifier=Modifier.weight(1f).clickable { onNavigate("تعبئة IDoom") },color=Color(0xFFE8F6EF),shape=RoundedCornerShape(16.dp)) {
+       Row(Modifier.padding(13.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+        Box(Modifier.size(36.dp).background(Color.White,CircleShape),contentAlignment=Alignment.Center){Text("i",fontWeight=FontWeight.Black,color=Green,fontSize=20.sp)}
+        Column {
+         Text(network,fontWeight=FontWeight.Bold,color=GreenDark,style=MaterialTheme.typography.labelMedium)
+         Text("إعادة شحن",style=MaterialTheme.typography.labelSmall,color=Green)
+        }
+       }
+      }
+     }
+    }
+   }
+  }
  }
 }
 @Composable private fun StatCard(title:String,value:String,modifier:Modifier=Modifier) { Card(modifier) { Column(Modifier.padding(14.dp)) { Text(title,style=MaterialTheme.typography.bodySmall,color=Color.Gray);Text(value,style=MaterialTheme.typography.headlineMedium,color=Green,fontWeight=FontWeight.Bold) } } }
