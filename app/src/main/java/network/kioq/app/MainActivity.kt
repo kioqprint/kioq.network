@@ -58,7 +58,7 @@ private val Red = Color(0xFFD83A45)
 private val Page = Color(0xFFF3F8F5)
 private val services = listOf("Djezzy", "Ooredoo", "Mobilis", "IDoom Fibre", "IDoom 4G")
 private val quickAmounts = listOf("50", "100", "200", "500", "1000", "1500", "2000")
-private val menuItems = listOf("الرئيسية", "تعبئة الهاتف", "تعبئة IDoom", "سجل التعبئات", "الزبائن والتجار", "الديون والمدفوعات", "الأرباح والمداخيل", "الصندوق والسحوبات", "الإشعارات", "المحادثات", "التقارير والإحصائيات", "الإعدادات")
+private val menuItems = listOf("الرئيسية", "تعبئة رصيد الهاتف", "تعبئة الإنترنت", "سجل التعبئات", "الزبائن والتجار", "الديون والمدفوعات", "الأرباح والمداخيل", "الصندوق والسحوبات", "الإشعارات", "المحادثات", "التقارير والإحصائيات", "الإعدادات")
 private data class Contact(val id:Long=0,val first:String,val last:String,val number:String,val service:String) { val fullName:String get()="$first $last" }
 private data class RechargeRecord(val id:String,val name:String,val number:String,val service:String,val kind:String,val amount:Int,val deducted:Int,val status:String,val date:String)
 
@@ -88,9 +88,9 @@ private suspend fun loadBannerBitmap(context: Context, uri: Uri): androidx.compo
  }
 
 private val demoRecords = listOf(
- RechargeRecord("KQ-1003","محمد بن علي","0770123456","Djezzy","شحن عادي",1000,970,"ناجحة","16/11/2026 · 10:35"),
+ RechargeRecord("KQ-1003","محمد بن علي","0770123456","Djezzy","مبلغ متغير (Dynamic Plan)",1000,970,"ناجحة","16/11/2026 · 10:35"),
  RechargeRecord("KQ-1002","أحمد قادري","0550223344","Ooredoo","عرض مفعّل",500,485,"قيد المعالجة","16/11/2026 · 10:20"),
- RechargeRecord("KQ-1001","زبون غير محفوظ","0660111222","Mobilis","شحن عادي",100,0,"فاشلة","16/11/2026 · 09:50")
+ RechargeRecord("KQ-1001","زبون غير محفوظ","0660111222","Mobilis","مبلغ متغير (Dynamic Plan)",100,0,"فاشلة","16/11/2026 · 09:50")
 )
 private class ContactDb(ctx:Context):SQLiteOpenHelper(ctx,"kioq_contacts.db",null,1) {
  override fun onCreate(db:SQLiteDatabase) { db.execSQL("CREATE TABLE contacts(id INTEGER PRIMARY KEY AUTOINCREMENT,first TEXT NOT NULL,last TEXT NOT NULL,number TEXT NOT NULL,service TEXT NOT NULL,UNIQUE(number,service))") }
@@ -150,10 +150,16 @@ private fun networkFor(number:String,selected:String):String {
   else->selected
  }
 }
+private fun serviceLabel(service:String):String = when(service) {
+ "IDoom 4G" -> "4G LTE"
+ "IDoom Fibre" -> "IDoom Fibre"
+ "IDoom" -> "Algérie Télécom"
+ else -> service
+}
 @Composable private fun NetworkMark(service:String,large:Boolean=false) {
  val color=when(service) { "Djezzy"->Color(0xFFD92732); "Ooredoo"->Color(0xFFE51D2A); "Mobilis"->Color(0xFF0876B9); "IDoom Fibre","IDoom 4G","IDoom"->Green; else->Green }
  Surface(color=Color.White,contentColor=color,shape=RoundedCornerShape(11.dp),border=androidx.compose.foundation.BorderStroke(1.dp,color.copy(alpha=0.24f))) {
-  Text(service,Modifier.padding(horizontal=if(large)12.dp else 9.dp,vertical=if(large)8.dp else 6.dp),fontSize=if(large)12.sp else 10.sp,fontWeight=FontWeight.ExtraBold,maxLines=1)
+  Text(serviceLabel(service),Modifier.padding(horizontal=if(large)12.dp else 9.dp,vertical=if(large)8.dp else 6.dp),fontSize=if(large)12.sp else 10.sp,fontWeight=FontWeight.ExtraBold,maxLines=1)
  }
 }
 @Composable private fun KioqApp() {
@@ -167,7 +173,7 @@ private fun networkFor(number:String,selected:String):String {
  LaunchedEffect(Unit) { delay(2000); showSplash=false }
  var drawer by remember { mutableStateOf(false) }
  var service by remember { mutableStateOf("Djezzy") }
- var kind by remember { mutableStateOf("شحن عادي") }
+ var kind by remember { mutableStateOf("مبلغ متغير (Dynamic Plan)") }
  var number by remember { mutableStateOf("") }
  var amount by remember { mutableStateOf("") }
  var contactQuery by remember { mutableStateOf("") }
@@ -257,9 +263,9 @@ private fun networkFor(number:String,selected:String):String {
    Box(Modifier.fillMaxWidth().widthIn(max=620.dp)) {
    when(page) {
      "الرئيسية" -> Dashboard(onNavigate={page=it},contacts=contacts.size,onHelp={helpNetwork=it})
-     "تعبئة الهاتف","تعبئة IDoom" -> RechargePage(page,service,{service=it},kind,{kind=it},number,{number=it.filter(Char::isDigit)},amount,{amount=it.filter(Char::isDigit)},detected,recent,message,{message=it},onSave={editing=null;dialog=true},onConfirm={message="طلب تجريبي فقط: لم يتم إرسال طلب أو خصم رصيد."})
+     "تعبئة رصيد الهاتف","تعبئة الإنترنت" -> RechargePage(page,service,{service=it},kind,{kind=it},number,{number=it.filter(Char::isDigit)},amount,{amount=it.filter(Char::isDigit)},detected,recent,message,{message=it},onSave={editing=null;dialog=true},onConfirm={message="طلب تجريبي فقط: لم يتم إرسال طلب أو خصم رصيد."})
      "سجل التعبئات" -> HistoryPage(historyQuery,{historyQuery=it},statusFilter,{statusFilter=it},records,expanded,{expanded=it})
-     "الزبائن والتجار" -> ContactsPage(contactQuery,{contactQuery=it},contactList,onAdd={editing=null;dialog=true},onUse={c->service=c.service;number=c.number;page=if(c.service.startsWith("IDoom")) "تعبئة IDoom" else "تعبئة الهاتف"},onEdit={editing=it;dialog=true},onDelete={contact->scope.launch { withContext(Dispatchers.IO) { db.delete(contact.id); db.all() }.also { contacts=it } }},onCall={context.startActivity(Intent(Intent.ACTION_DIAL,Uri.parse("tel:"+it)))})
+     "الزبائن والتجار" -> ContactsPage(contactQuery,{contactQuery=it},contactList,onAdd={editing=null;dialog=true},onUse={c->service=c.service;number=c.number;page=if(c.service.startsWith("IDoom")) "تعبئة الإنترنت" else "تعبئة رصيد الهاتف"},onEdit={editing=it;dialog=true},onDelete={contact->scope.launch { withContext(Dispatchers.IO) { db.delete(contact.id); db.all() }.also { contacts=it } }},onCall={context.startActivity(Intent(Intent.ACTION_DIAL,Uri.parse("tel:"+it)))})
      "الديون والمدفوعات" -> InfoPage("الديون والمدفوعات","متابعة ديون التجار، الدفعات الجزئية، والمبالغ المتبقية.","سيتم احتساب الجزء المحصّل من الهامش بنسبة المبلغ المسدد إلى الدين المرتبط به.")
      "الأرباح والمداخيل" -> InfoPage("الأرباح والمداخيل","إجمالي الأرباح المسجلة، المحصّلة، وغير المحصّلة.","الأرباح تقارير محاسبية وليست محفظة رصيد مستقلة.")
      "الصندوق والسحوبات" -> InfoPage("الصندوق والسحوبات","متابعة المبالغ المحصّلة والسحوبات إلى الصندوق الفعلي.","السحب تحويل محاسبي للصندوق ولا يُسجّل كربح جديد.")
@@ -343,7 +349,7 @@ private fun networkFor(number:String,selected:String):String {
     Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(9.dp)) {
      Surface(color=Color(0xFFFFF0F0),shape=RoundedCornerShape(12.dp),modifier=Modifier.size(38.dp)){Box(contentAlignment=Alignment.Center){Text("☎",color=Red,fontSize=20.sp,fontWeight=FontWeight.Bold)}}
      Column {
-      Text("خدمات الشركات",fontWeight=FontWeight.ExtraBold,color=GreenDark,style=MaterialTheme.typography.titleLarge)
+      Text("شبكات الهاتف والإنترنت",fontWeight=FontWeight.ExtraBold,color=GreenDark,style=MaterialTheme.typography.titleLarge)
       Text("معلومات الاتصال والدعم لكل شركة",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
      }
     }
@@ -355,7 +361,7 @@ private fun networkFor(number:String,selected:String):String {
         Text(when(network) { "Djezzy"->"D"; "Ooredoo"->"O"; "Mobilis"->"M"; else->"i" },fontSize=21.sp,fontWeight=FontWeight.Black,color=accent)
        }
        Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(2.dp)) {
-        Text(network,fontWeight=FontWeight.Bold,color=GreenDark)
+        Text(serviceLabel(network),fontWeight=FontWeight.Bold,color=GreenDark)
         Text("أرقام الخدمة والدعم",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
        }
        Text("الدعم  ←",style=MaterialTheme.typography.labelMedium,fontWeight=FontWeight.Bold,color=accent)
@@ -373,10 +379,10 @@ private fun networkFor(number:String,selected:String):String {
       Text("اختر نوع التعبئة للمتابعة",style=MaterialTheme.typography.labelSmall,color=Color(0xFFD6E9DE))
      }
     }
-    Text("تعبئة الهاتف",fontWeight=FontWeight.Bold,color=Color.White)
+    Text("تعبئة رصيد الهاتف",fontWeight=FontWeight.Bold,color=Color.White)
     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
      listOf("Djezzy","Ooredoo","Mobilis").forEach { network ->
-      Surface(modifier=Modifier.weight(1f).clickable { onNavigate("تعبئة الهاتف") },color=Color.White,shape=RoundedCornerShape(16.dp)) {
+      Surface(modifier=Modifier.weight(1f).clickable { onNavigate("تعبئة رصيد الهاتف") },color=Color.White,shape=RoundedCornerShape(16.dp)) {
        Column(Modifier.padding(vertical=14.dp,horizontal=5.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(5.dp)) {
         Box(Modifier.size(34.dp).background(when(network) { "Djezzy"->Color(0xFFFFE9EA); "Ooredoo"->Color(0xFFFFE9EA); else->Color(0xFFE6F3FB) },CircleShape),contentAlignment=Alignment.Center) {
          Text(when(network) { "Djezzy"->"D"; "Ooredoo"->"O"; else->"M" },fontWeight=FontWeight.Black,color=when(network) { "Djezzy"->Red; "Ooredoo"->Red; else->Color(0xFF0876B9) },fontSize=18.sp)
@@ -389,7 +395,7 @@ private fun networkFor(number:String,selected:String):String {
     Text("تعبئة الإنترنت",fontWeight=FontWeight.Bold,color=Color.White)
     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
      listOf("IDoom Fibre","IDoom 4G").forEach { network ->
-      Surface(modifier=Modifier.weight(1f).clickable { onNavigate("تعبئة IDoom") },color=Color(0xFFE8F6EF),shape=RoundedCornerShape(16.dp)) {
+      Surface(modifier=Modifier.weight(1f).clickable { onNavigate("تعبئة الإنترنت") },color=Color(0xFFE8F6EF),shape=RoundedCornerShape(16.dp)) {
        Row(Modifier.padding(13.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
         Box(Modifier.size(36.dp).background(Color.White,CircleShape),contentAlignment=Alignment.Center){Text("i",fontWeight=FontWeight.Black,color=Green,fontSize=20.sp)}
         Column {
@@ -406,7 +412,7 @@ private fun networkFor(number:String,selected:String):String {
 }
 @Composable private fun StatCard(title:String,value:String,modifier:Modifier=Modifier) { Card(modifier) { Column(Modifier.padding(14.dp)) { Text(title,style=MaterialTheme.typography.bodySmall,color=Color.Gray);Text(value,style=MaterialTheme.typography.headlineMedium,color=Green,fontWeight=FontWeight.Bold) } } }
 @Composable private fun RechargePage(page:String,service:String,onService:(String)->Unit,kind:String,onKind:(String)->Unit,number:String,onNumber:(String)->Unit,amount:String,onAmount:(String)->Unit,detected:String,recent:List<Contact>,message:String,onMessage:(String)->Unit,onSave:()->Unit,onConfirm:()->Unit) {
- val isInternet=page=="تعبئة IDoom"
+ val isInternet=page=="تعبئة الإنترنت"
  val choices=if(isInternet) services.filter { it.startsWith("IDoom") } else services.filter { !it.startsWith("IDoom") }
  val activeNetwork=if(number.isNotBlank()) detected else service
  LazyColumn(
@@ -418,7 +424,7 @@ private fun networkFor(number:String,selected:String):String {
   item {
    Column(Modifier.fillMaxWidth().widthIn(max=540.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(5.dp)) {
     Text(if(isInternet)"تعبئة الإنترنت" else "تعبئة رصيد الهاتف",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.ExtraBold,color=GreenDark)
-    Text(if(isInternet)"اختر الخدمة وأدخل رقم الاشتراك" else "اختر الشبكة وأدخل رقم الهاتف",style=MaterialTheme.typography.bodyMedium,color=Color.Gray)
+    Text(if(isInternet)"اختر الخدمة وأدخل رقم الخط حسب صيغة OneClick" else "اختر الشبكة وأدخل رقم الهاتف",style=MaterialTheme.typography.bodyMedium,color=Color.Gray)
    }
   }
   item {
@@ -429,7 +435,7 @@ private fun networkFor(number:String,selected:String):String {
     elevation=CardDefaults.cardElevation(defaultElevation=2.dp)
    ) {
     Column(Modifier.fillMaxWidth().padding(18.dp),verticalArrangement=Arrangement.spacedBy(15.dp)) {
-     Text(if(isInternet)"نوع الاشتراك" else "اختر شبكة الهاتف",fontWeight=FontWeight.Bold,color=GreenDark)
+     Text(if(isInternet)"نوع خدمة الإنترنت" else "اختر شبكة الهاتف",fontWeight=FontWeight.Bold,color=GreenDark)
      Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
       choices.forEach { option ->
        val selected=service==option
@@ -441,7 +447,7 @@ private fun networkFor(number:String,selected:String):String {
        ) {
         Column(Modifier.fillMaxWidth().padding(vertical=13.dp,horizontal=4.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(6.dp)) {
          NetworkMark(option,true)
-         Text(option,fontWeight=if(selected) FontWeight.Bold else FontWeight.Medium,style=MaterialTheme.typography.labelMedium,color=if(selected) GreenDark else Color.DarkGray)
+         Text(serviceLabel(option),fontWeight=if(selected) FontWeight.Bold else FontWeight.Medium,style=MaterialTheme.typography.labelMedium,color=if(selected) GreenDark else Color.DarkGray)
         }
        }
       }
@@ -449,7 +455,7 @@ private fun networkFor(number:String,selected:String):String {
      HorizontalDivider(color=Page)
      Text("نوع العملية",fontWeight=FontWeight.Bold,color=GreenDark)
      Row(Modifier.fillMaxWidth().background(Page,RoundedCornerShape(14.dp)).padding(4.dp),horizontalArrangement=Arrangement.spacedBy(5.dp)) {
-      listOf("شحن عادي","العروض المفعّلة").forEach { option ->
+      listOf("مبلغ متغير (Dynamic Plan)","العروض حسب الرقم (GETMENU)").forEach { option ->
        val selected=kind==option
        Surface(
         modifier=Modifier.weight(1f).clickable { onKind(option) },
@@ -462,13 +468,13 @@ private fun networkFor(number:String,selected:String):String {
       }
      }
      Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
-      Text(if(isInternet)"رقم اشتراك IDoom" else "رقم الهاتف",fontWeight=FontWeight.Bold,color=GreenDark)
+      Text(if(isInternet)"رقم الخط / رقم الهاتف (MSSIDN)" else "رقم الهاتف (MSSIDN)",fontWeight=FontWeight.Bold,color=GreenDark)
       OutlinedTextField(
        value=number,
        onValueChange=onNumber,
        modifier=Modifier.fillMaxWidth(),
        singleLine=true,
-       placeholder={Text(if(isInternet)"أدخل رقم الاشتراك" else "أدخل رقم الهاتف دون بادئة مسبقة")},
+       placeholder={Text(if(isInternet)"أدخل رقم الخط حسب صيغة OneClick" else "أدخل رقم الهاتف حسب صيغة OneClick")},
        leadingIcon={if(number.isNotBlank()) NetworkMark(activeNetwork,true) else Text("☎",color=Green,fontSize=20.sp)},
        trailingIcon={if(number.isNotBlank()) IconButton(onClick={onNumber("")}) { Text("×",color=Green,fontSize=24.sp,fontWeight=FontWeight.Bold) }},
        keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Phone),
@@ -501,7 +507,7 @@ private fun networkFor(number:String,selected:String):String {
        }
       }
      }
-     if(kind=="شحن عادي") {
+     if(kind=="مبلغ متغير (Dynamic Plan)") {
       Column(verticalArrangement=Arrangement.spacedBy(9.dp)) {
        Text("مبلغ التعبئة",fontWeight=FontWeight.Bold,color=GreenDark)
        OutlinedTextField(amount,onAmount,Modifier.fillMaxWidth(),singleLine=true,placeholder={Text("أدخل المبلغ بالدينار الجزائري")},suffix={Text("دج")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),shape=RoundedCornerShape(16.dp))
@@ -515,7 +521,7 @@ private fun networkFor(number:String,selected:String):String {
        }
       }
      } else {
-      Text("العروض المتاحة ستظهر عند تفعيلها ببيانات مؤكدة.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+      Text("GETMENU يجلب العروض المتاحة لهذا الرقم. أما Fixed Plans فهي باقات بمبالغ محددة مسبقاً من كتالوج OneClick.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
      }
      OutlinedButton(onClick=onSave,modifier=Modifier.fillMaxWidth().height(50.dp),shape=RoundedCornerShape(15.dp),border=androidx.compose.foundation.BorderStroke(1.3.dp,Green)) { Text("حفظ الرقم كجهة اتصال",fontWeight=FontWeight.SemiBold) }
      Button(
@@ -751,7 +757,7 @@ private fun networkFor(number:String,selected:String):String {
    Text("هذه التفضيلات تحفظ محلياً؛ إرسال إشعارات فعلية يتطلب ربط خدمة الإشعارات بالخادم.", style=MaterialTheme.typography.bodySmall, color=Color.Gray)
   } }
   item { SettingsGroup("إعدادات الخدمات", "التحكم في الخدمات المتاحة") {
-   SettingsAction("خدمات الهاتف والإنترنت", "Djezzy وOoredoo وMobilis وIDoom", "smartphone") { dialogTitle="إعدادات الخدمات"; dialogText="إظهار الخدمات وإخفاؤها من حسابات التجار سيكون من صلاحيات المالك، وسيتم تطبيقه مركزياً بعد ربط الخادم." }
+   SettingsAction("خدمات الهاتف والإنترنت", "Djezzy وOoredoo وMobilis وخدمات الإنترنت ADSL و4G LTE", "smartphone") { dialogTitle="إعدادات الخدمات"; dialogText="إظهار الخدمات وإخفاؤها من حسابات التجار سيكون من صلاحيات المالك، وسيتم تطبيقه مركزياً بعد ربط الخادم." }
    SettingsAction("المبالغ والعروض", "إدارة مبالغ التعبئة والعروض المتاحة", "list") { dialogTitle="المبالغ والعروض"; dialogText="المبالغ السريعة الحالية: 50، 100، 200، 500، 1000، 1500، 2000 دج. إدارة القيم والعروض تحتاج صلاحية المالك ومصدراً مؤكداً للبيانات." }
   } }
   item { SettingsGroup("الإعدادات التجارية والمالية · المالك فقط", "لا تظهر هذه الصلاحيات للتاجر") {
