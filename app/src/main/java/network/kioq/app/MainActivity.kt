@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.animation.Crossfade
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -49,6 +48,7 @@ import androidx.compose.animation.core.tween
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 
 private val Green = Color(0xFF087A50)
 private val GreenDark = Color(0xFF06452F)
@@ -76,12 +76,16 @@ private suspend fun loadBannerBitmap(context: Context, uri: Uri): androidx.compo
   runCatching {
    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
    context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+   if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return@runCatching null
    var sample = 1
-   while (bounds.outWidth / sample > 1280 || bounds.outHeight / sample > 720) sample *= 2
-   val options = BitmapFactory.Options().apply { inSampleSize = sample.coerceAtLeast(1) }
+   while (bounds.outWidth / sample > 960 || bounds.outHeight / sample > 540) sample *= 2
+   val options = BitmapFactory.Options().apply {
+    inSampleSize = sample.coerceAtLeast(1)
+    inPreferredConfig = android.graphics.Bitmap.Config.RGB_565
+   }
    context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, options)?.asImageBitmap() }
   }.getOrNull()
-}
+ }
 
 private val demoRecords = listOf(
  RechargeRecord("KQ-1003","محمد بن علي","0770123456","Djezzy","شحن عادي",1000,970,"ناجحة","16/11/2026 · 10:35"),
@@ -155,7 +159,9 @@ private fun networkFor(number:String,selected:String):String {
 @Composable private fun KioqApp() {
  val context=LocalContext.current
  val db=remember { ContactDb(context.applicationContext) }
- var contacts by remember { mutableStateOf(db.all()) }
+ val scope=rememberCoroutineScope()
+ var contacts by remember { mutableStateOf<List<Contact>>(emptyList()) }
+ LaunchedEffect(db) { contacts = withContext(Dispatchers.IO) { db.all() } }
  var page by remember { mutableStateOf("الرئيسية") }
  var showSplash by remember { mutableStateOf(true) }
  LaunchedEffect(Unit) { delay(2000); showSplash=false }
@@ -241,13 +247,11 @@ private fun networkFor(number:String,selected:String):String {
     }
     if(imageUris.isNotEmpty()) {
      val currentBannerUri = imageUris[imageIndex.coerceIn(0,imageUris.lastIndex)]
-     Crossfade(targetState=currentBannerUri,label="banner-image") { uri ->
-      val bitmap by produceState<androidx.compose.ui.graphics.ImageBitmap?>(initialValue=null, key1=uri) {
-       value = loadBannerBitmap(context, Uri.parse(uri))
-      }
-      if(bitmap!=null) Image(bitmap=bitmap!!,contentDescription="بانر KIOQ.network",modifier=Modifier.fillMaxWidth().padding(horizontal=12.dp).height(imageHeight.dp),contentScale=ContentScale.Crop)
-      else Box(Modifier.fillMaxWidth().padding(horizontal=12.dp).height(imageHeight.dp).background(GreenSoft,RoundedCornerShape(14.dp)))
+     val bitmap by produceState<androidx.compose.ui.graphics.ImageBitmap?>(initialValue=null, key1=currentBannerUri) {
+      value = loadBannerBitmap(context, Uri.parse(currentBannerUri))
      }
+     if(bitmap!=null) Image(bitmap=bitmap!!,contentDescription="بانر KIOQ.network",modifier=Modifier.fillMaxWidth().padding(horizontal=12.dp).height(imageHeight.dp),contentScale=ContentScale.Crop)
+     else Box(Modifier.fillMaxWidth().padding(horizontal=12.dp).height(imageHeight.dp).background(GreenSoft,RoundedCornerShape(14.dp)))
     }
     Box(Modifier.fillMaxWidth(),contentAlignment=Alignment.TopCenter) {
    Box(Modifier.fillMaxWidth().widthIn(max=620.dp)) {
@@ -255,7 +259,7 @@ private fun networkFor(number:String,selected:String):String {
      "الرئيسية" -> Dashboard(onNavigate={page=it},contacts=contacts.size,onHelp={helpNetwork=it})
      "تعبئة الهاتف","تعبئة IDoom" -> RechargePage(page,service,{service=it},kind,{kind=it},number,{number=it.filter(Char::isDigit)},amount,{amount=it.filter(Char::isDigit)},detected,recent,message,{message=it},onSave={editing=null;dialog=true},onConfirm={message="طلب تجريبي فقط: لم يتم إرسال طلب أو خصم رصيد."})
      "سجل التعبئات" -> HistoryPage(historyQuery,{historyQuery=it},statusFilter,{statusFilter=it},records,expanded,{expanded=it})
-     "الزبائن والتجار" -> ContactsPage(contactQuery,{contactQuery=it},contactList,onAdd={editing=null;dialog=true},onUse={c->service=c.service;number=c.number;page=if(c.service.startsWith("IDoom")) "تعبئة IDoom" else "تعبئة الهاتف"},onEdit={editing=it;dialog=true},onDelete={db.delete(it.id);contacts=db.all()},onCall={context.startActivity(Intent(Intent.ACTION_DIAL,Uri.parse("tel:"+it)))})
+     "الزبائن والتجار" -> ContactsPage(contactQuery,{contactQuery=it},contactList,onAdd={editing=null;dialog=true},onUse={c->service=c.service;number=c.number;page=if(c.service.startsWith("IDoom")) "تعبئة IDoom" else "تعبئة الهاتف"},onEdit={editing=it;dialog=true},onDelete={contact->scope.launch { withContext(Dispatchers.IO) { db.delete(contact.id); db.all() }.also { contacts=it } }},onCall={context.startActivity(Intent(Intent.ACTION_DIAL,Uri.parse("tel:"+it)))})
      "الديون والمدفوعات" -> InfoPage("الديون والمدفوعات","متابعة ديون التجار، الدفعات الجزئية، والمبالغ المتبقية.","سيتم احتساب الجزء المحصّل من الهامش بنسبة المبلغ المسدد إلى الدين المرتبط به.")
      "الأرباح والمداخيل" -> InfoPage("الأرباح والمداخيل","إجمالي الأرباح المسجلة، المحصّلة، وغير المحصّلة.","الأرباح تقارير محاسبية وليست محفظة رصيد مستقلة.")
      "الصندوق والسحوبات" -> InfoPage("الصندوق والسحوبات","متابعة المبالغ المحصّلة والسحوبات إلى الصندوق الفعلي.","السحب تحويل محاسبي للصندوق ولا يُسجّل كربح جديد.")
@@ -296,7 +300,11 @@ private fun networkFor(number:String,selected:String):String {
     Text("الشبكة",fontWeight=FontWeight.SemiBold)
     services.chunked(2).forEach { group->Row(horizontalArrangement=Arrangement.spacedBy(3.dp)) { group.forEach { s->FilterChip(selected=chosen==s,onClick={chosen=s},label={Text(s)}) } } }
    }},
-   confirmButton={TextButton(onClick={if(first.isNotBlank()&&last.isNotBlank()&&num.isNotBlank()){db.save(Contact(editing?.id?:0,first.trim(),last.trim(),num,chosen));contacts=db.all();dialog=false}}){Text("حفظ")}},
+   confirmButton={TextButton(onClick={if(first.isNotBlank()&&last.isNotBlank()&&num.isNotBlank()){
+     val contact=Contact(editing?.id?:0,first.trim(),last.trim(),num,chosen)
+     dialog=false
+     scope.launch { withContext(Dispatchers.IO) { db.save(contact); db.all() }.also { contacts=it } }
+    }}){Text("حفظ")}},
    dismissButton={TextButton(onClick={dialog=false}){Text("إلغاء")}}
   )
  }
