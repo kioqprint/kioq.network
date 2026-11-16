@@ -32,6 +32,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
@@ -39,13 +41,19 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import kotlinx.coroutines.delay
 
-private val Green = Color(0xFF075B3D)
-private val GreenDark = Color(0xFF03452F)
-private val GreenSoft = Color(0xFFE7F2EB)
+private val Green = Color(0xFF087A50)
+private val GreenDark = Color(0xFF06452F)
+private val GreenSoft = Color(0xFFE6F5EC)
+private val GreenBright = Color(0xFF19A66A)
 private val Red = Color(0xFFD83A45)
-private val Page = Color(0xFFF4F7F5)
+private val Page = Color(0xFFF3F8F5)
 private val services = listOf("Djezzy", "Ooredoo", "Mobilis", "IDoom Fibre", "IDoom 4G")
 private val quickAmounts = listOf("50", "100", "200", "500", "1000", "1500", "2000")
 private val menuItems = listOf("الرئيسية", "تعبئة الهاتف", "تعبئة IDoom", "سجل التعبئات", "الزبائن والتجار", "الديون والمدفوعات", "الأرباح والمداخيل", "الصندوق والسحوبات", "الإشعارات", "المحادثات", "التقارير والإحصائيات", "الإعدادات")
@@ -85,7 +93,7 @@ private class ContactDb(ctx:Context):SQLiteOpenHelper(ctx,"kioq_contacts.db",nul
 class MainActivity:ComponentActivity() {
  override fun onCreate(savedInstanceState:Bundle?) { super.onCreate(savedInstanceState); setContent {
   CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-   MaterialTheme(colorScheme=lightColorScheme(primary=Green,onPrimary=Color.White,secondary=Red,onSecondary=Color.White,tertiary=Color(0xFFB58A32),background=Page,surface=Color.White,surfaceVariant=GreenSoft,onSurface=Color(0xFF17251E),onSurfaceVariant=Color(0xFF52645A))) {
+   MaterialTheme(colorScheme=lightColorScheme(primary=Green,onPrimary=Color.White,primaryContainer=GreenSoft,onPrimaryContainer=GreenDark,secondary=Red,onSecondary=Color.White,tertiary=Color(0xFFB58A32),background=Page,surface=Color.White,surfaceVariant=GreenSoft,onSurface=Color(0xFF17251E),onSurfaceVariant=Color(0xFF52645A),outline=Color(0xFFB9CFC2)),shapes=Shapes(small=RoundedCornerShape(13.dp),medium=RoundedCornerShape(19.dp),large=RoundedCornerShape(26.dp))) {
     Surface(Modifier.fillMaxSize(),color=Page) { KioqApp() }
    }
   }
@@ -97,6 +105,20 @@ class MainActivity:ComponentActivity() {
    Text("K",fontWeight=FontWeight.Black,color=GreenDark,style=MaterialTheme.typography.headlineLarge)
    Box(Modifier.align(Alignment.TopEnd).padding(7.dp).size(7.dp).background(Red,CircleShape))
   }
+ }
+}
+@Composable private fun SplashScreen() {
+ val transition=rememberInfiniteTransition(label="splash-pulse")
+ val pulse by transition.animateFloat(initialValue=0.96f,targetValue=1.04f,animationSpec=infiniteRepeatable(tween(950),RepeatMode.Reverse),label="logo-pulse")
+ Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xFF043D2A),Color(0xFF087A50),Color(0xFF18A66B)))),contentAlignment=Alignment.Center) {
+  Column(horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(15.dp)) {
+   BrandMark(94)
+   Text("KIOQ.network",Modifier.graphicsLayer { scaleX=pulse;scaleY=pulse },color=Color.White,fontSize=31.sp,fontWeight=FontWeight.Black)
+   Text("منصة خدمات الهاتف والإنترنت",color=Color(0xFFD9F2E4),style=MaterialTheme.typography.bodyLarge)
+   Spacer(Modifier.height(22.dp))
+   Box(Modifier.width(42.dp).height(3.dp).background(Color(0x99FFFFFF),RoundedCornerShape(8.dp)))
+  }
+  Text("الجزائر",Modifier.align(Alignment.BottomCenter).padding(bottom=34.dp),color=Color(0xCCFFFFFF),style=MaterialTheme.typography.labelMedium)
  }
 }
 private fun networkFor(number:String,selected:String):String {
@@ -111,10 +133,9 @@ private fun networkFor(number:String,selected:String):String {
  }
 }
 @Composable private fun NetworkMark(service:String,large:Boolean=false) {
- val color=when(service) { "Djezzy"->Color(0xFFD92732); "Ooredoo"->Color(0xFFE51D2A); "Mobilis"->Color(0xFF0876B9); "IDoom Fibre","IDoom 4G"->Green; else->Green }
- Surface(color=color,shape=RoundedCornerShape(12.dp)) {
-  Text(when(service) { "Djezzy"->"D"; "Ooredoo"->"O"; "Mobilis"->"M"; "IDoom Fibre"->"F"; "IDoom 4G"->"4G"; "IDoom"->"I"; else->"K" },
-   Modifier.padding(horizontal=if(large)14.dp else 10.dp,vertical=if(large)9.dp else 6.dp),color=Color.White,fontWeight=FontWeight.Black)
+ val color=when(service) { "Djezzy"->Color(0xFFD92732); "Ooredoo"->Color(0xFFE51D2A); "Mobilis"->Color(0xFF0876B9); "IDoom Fibre","IDoom 4G","IDoom"->Green; else->Green }
+ Surface(color=Color.White,contentColor=color,shape=RoundedCornerShape(11.dp),border=androidx.compose.foundation.BorderStroke(1.dp,color.copy(alpha=0.24f))) {
+  Text(service,Modifier.padding(horizontal=if(large)12.dp else 9.dp,vertical=if(large)8.dp else 6.dp),fontSize=if(large)12.sp else 10.sp,fontWeight=FontWeight.ExtraBold,maxLines=1)
  }
 }
 @Composable private fun KioqApp() {
@@ -122,6 +143,8 @@ private fun networkFor(number:String,selected:String):String {
  val db=remember { ContactDb(context.applicationContext) }
  var contacts by remember { mutableStateOf(db.all()) }
  var page by remember { mutableStateOf("الرئيسية") }
+ var showSplash by remember { mutableStateOf(true) }
+ LaunchedEffect(Unit) { delay(2000); showSplash=false }
  var drawer by remember { mutableStateOf(false) }
  var service by remember { mutableStateOf("Djezzy") }
  var kind by remember { mutableStateOf("شحن عادي") }
@@ -160,6 +183,9 @@ private fun networkFor(number:String,selected:String):String {
  val recent=contacts.filter { it.service==service && (number.isBlank() || it.number.contains(number) || it.fullName.contains(number,true)) }.take(4)
  val contactList=contacts.filter { (it.fullName+" "+it.number+" "+it.service).contains(contactQuery.trim(),true) }
  val records=demoRecords.filter { (it.id+it.name+it.number+it.service).contains(historyQuery.trim(),true) && (statusFilter=="الكل" || it.status==statusFilter) }
+ if(showSplash) {
+  SplashScreen()
+ } else {
  ModalNavigationDrawer(
   drawerState=drawerState,
   gesturesEnabled=true,
@@ -205,7 +231,9 @@ private fun networkFor(number:String,selected:String):String {
       if(bitmap!=null) Image(bitmap=bitmap,contentDescription="بانر KIOQ.network",modifier=Modifier.fillMaxWidth().padding(horizontal=12.dp).height(imageHeight.dp),contentScale=ContentScale.Crop)
      }
     }
-    when(page) {
+    Box(Modifier.fillMaxWidth(),contentAlignment=Alignment.TopCenter) {
+   Box(Modifier.fillMaxWidth().widthIn(max=620.dp)) {
+   when(page) {
      "الرئيسية" -> Dashboard(onNavigate={page=it},contacts=contacts.size,onHelp={helpNetwork=it})
      "تعبئة الهاتف","تعبئة IDoom" -> RechargePage(page,service,{service=it},kind,{kind=it},number,{number=it.filter(Char::isDigit)},amount,{amount=it.filter(Char::isDigit)},detected,recent,message,{message=it},onSave={editing=null;dialog=true},onConfirm={message="طلب تجريبي فقط: لم يتم إرسال طلب أو خصم رصيد."})
      "سجل التعبئات" -> HistoryPage(historyQuery,{historyQuery=it},statusFilter,{statusFilter=it},records,expanded,{expanded=it})
@@ -218,8 +246,10 @@ private fun networkFor(number:String,selected:String):String {
      "التقارير والإحصائيات" -> InfoPage("التقارير والإحصائيات","ملخص العمليات والمبيعات والديون والأرباح.","ستظهر البيانات الحقيقية بعد ربط الخادم.")
      else -> BannerSettingsPage(bannerText,{bannerText=it;prefs.edit().putString("text",it).apply()},textSize,{textSize=it;prefs.edit().putFloat("textSize",it).apply()},textSpeed,{textSpeed=it;prefs.edit().putFloat("textSpeed",it).apply()},imageHeight,{imageHeight=it;prefs.edit().putFloat("imageHeight",it).apply()},imageSpeed,{imageSpeed=it;prefs.edit().putFloat("imageSpeed",it).apply()},imageUris,onAddImage={if(imageUris.size<5) imagePicker.launch(arrayOf("image/*"))},onDeleteImage={uri->imageUris=imageUris.filterNot{it==uri};prefs.edit().putString("images",imageUris.joinToString("|")).apply()})
     }
+    }
    }
   }
+ }
  }
  if(helpNetwork!=null) {
   val network=helpNetwork!!
@@ -255,8 +285,8 @@ private fun networkFor(number:String,selected:String):String {
 @Composable private fun Dashboard(onNavigate:(String)->Unit,contacts:Int,onHelp:(String)->Unit) {
  LazyColumn(Modifier.fillMaxSize().padding(16.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
   item {
-   Card(colors=CardDefaults.cardColors(containerColor=GreenDark),shape=RoundedCornerShape(26.dp)) {
-    Column(Modifier.fillMaxWidth().padding(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
+   Card(colors=CardDefaults.cardColors(containerColor=Color.Transparent),shape=RoundedCornerShape(26.dp),modifier=Modifier.fillMaxWidth()) {
+    Column(Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(GreenDark,Green,GreenBright)),RoundedCornerShape(26.dp)).padding(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
      Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(13.dp)) { BrandMark(58);Column { Text("KIOQ.network",color=Color.White,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Black);Text("منصة خدمات الهاتف والإنترنت",color=Color(0xFFD6E9DE)) } }
      HorizontalDivider(color=Color(0x5579A992))
      Text("أهلاً بك",color=Color(0xFFB9D8C7))
@@ -264,7 +294,7 @@ private fun networkFor(number:String,selected:String):String {
     }
    }
   }
-  item { Text("النظرة السريعة",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold) }
+  item { Text("النظرة السريعة",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.ExtraBold,color=GreenDark) }
   item { Row(horizontalArrangement=Arrangement.spacedBy(9.dp)) { StatCard("الرصيد الرئيسي","— دج",Modifier.weight(1f));StatCard("الدين","— دج",Modifier.weight(1f)) } }
   item { Card(shape=RoundedCornerShape(18.dp)) { Column(Modifier.fillMaxWidth().padding(15.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
    Text("العمليات المنجزة اليوم",style=MaterialTheme.typography.bodyMedium,color=Color.Gray)
@@ -273,7 +303,7 @@ private fun networkFor(number:String,selected:String):String {
    Text("صافي الربح اليوم",style=MaterialTheme.typography.bodyMedium,color=Color.Gray)
    Text("— دج",style=MaterialTheme.typography.headlineSmall,color=Green,fontWeight=FontWeight.Bold)
   } } }
-  item { Text("الخدمات",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold) }
+  item { Text("الخدمات",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.ExtraBold,color=GreenDark) }
   item { Column(verticalArrangement=Arrangement.spacedBy(9.dp)) {
    listOf("Djezzy","Ooredoo","Mobilis","IDoom").chunked(2).forEach { group->Row(horizontalArrangement=Arrangement.spacedBy(9.dp)) {
     group.forEach { network->Card(Modifier.weight(1f).clickable { onHelp(network) },shape=RoundedCornerShape(18.dp)) {
@@ -281,7 +311,7 @@ private fun networkFor(number:String,selected:String):String {
     } }
    } }
   } }
-  item { Text("خدمات التعبئة",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold) }
+  item { Text("خدمات التعبئة",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.ExtraBold,color=GreenDark) }
   item { Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
    services.chunked(2).forEach { group->Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
     group.forEach { item->Card(Modifier.weight(1f).clickable { onNavigate(if(item.startsWith("IDoom"))"تعبئة IDoom" else "تعبئة الهاتف") }) { Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) { NetworkMark(item);Text(item,fontWeight=FontWeight.SemiBold) } } }
@@ -394,7 +424,7 @@ private fun networkFor(number:String,selected:String):String {
        quickAmounts.chunked(4).forEach { group ->
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp)) {
          group.forEach { value ->
-          FilterChip(selected=amount==value,onClick={onAmount(value)},label={Text(value)},modifier=Modifier.weight(1f))
+          Surface(modifier=Modifier.weight(1f).height(43.dp).clickable { onAmount(value) },shape=RoundedCornerShape(13.dp),color=if(amount==value) Green else GreenSoft,border=if(amount==value) null else androidx.compose.foundation.BorderStroke(1.dp,Color(0xFFD3E7DA))) { Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center) { Text(value+" دج",fontWeight=FontWeight.Bold,fontSize=12.sp,color=if(amount==value) Color.White else GreenDark) } }
          }
          repeat(4-group.size) { Spacer(Modifier.weight(1f)) }
         }
@@ -403,7 +433,7 @@ private fun networkFor(number:String,selected:String):String {
      } else {
       Text("العروض المتاحة ستظهر عند تفعيلها ببيانات مؤكدة.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
      }
-     OutlinedButton(onClick=onSave,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(14.dp)) { Text("حفظ الرقم كجهة اتصال") }
+     OutlinedButton(onClick=onSave,modifier=Modifier.fillMaxWidth().height(50.dp),shape=RoundedCornerShape(15.dp),border=androidx.compose.foundation.BorderStroke(1.3.dp,Green)) { Text("حفظ الرقم كجهة اتصال",fontWeight=FontWeight.SemiBold) }
      Button(
       onClick=onConfirm,
       modifier=Modifier.fillMaxWidth().height(52.dp),
