@@ -251,6 +251,7 @@ private fun networkFor(number:String,selected:String):String {
   }
  }
  }
+ }
  if(helpNetwork!=null) {
   val network=helpNetwork!!
   AlertDialog(onDismissRequest={helpNetwork=null},title={Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)){NetworkMark(network,true);Text("أرقام $network الرسمية")}},
